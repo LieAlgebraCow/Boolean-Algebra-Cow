@@ -93,8 +93,6 @@ def aerial_rotation(dt, persistent):
     return controller_input, persistent
 
 
-
-
 #############################################################################################
 
 #############################################################################################
@@ -195,6 +193,7 @@ class QuickTurn:
     '''
     A powerslide turn to turn a small amount quickly.  Designed for flipping for speed.
     Might be useful for shooting as well.
+    Probably deprecated
     '''
 
     def __init__(self,

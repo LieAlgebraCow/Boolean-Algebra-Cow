@@ -38,10 +38,8 @@ from Miscellaneous import angles_are_close, angle_difference, cap_magnitude, lef
 
 class FastDodge:
     '''
-    FastFlip will be called to flip for speed whenever we need to go fast and have space
-    for a flip.  Eventually decisions on whether to front or diagonal flip, how much 
-    (if at all) to boost, etc. will be handled by this class.  Note: this is only for flips
-    to gain speed, including turning to line up the dodge and deciding when to dodge.
+    Likely very outdated, might still be used in a kickoff, but I'm like 90% sure that 
+    kickoff is currently broken.
     '''
 
 

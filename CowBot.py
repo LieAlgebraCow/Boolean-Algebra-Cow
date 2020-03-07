@@ -13,7 +13,7 @@ from rlutilities.simulation import Curve
 
 from BallPrediction import PredictionPath, ball_contact_binary_search
 from Conversions import Vec3_to_vec3, rot_to_mat3
-from Cowculate import Cowculate #deprecate and rename planning?
+from Cowculate import Cowculate 
 from GamePlan import GamePlan
 from GameState import BallState, CarState, GameState, Hitbox, Orientation
 from Kickoffs.Kickoff import Kickoff, update_kickoff_position
@@ -22,8 +22,6 @@ from Miscellaneous import predict_for_time
 from Pathing.PathPlanning import shortest_arclinearc
 import States
 import Strategy
-#import Planning.TeamPlanning.Planning as TeamPlanning  #Team planning is no longer in this version due to bugs.  Copy from Ones planning and update team strategy at some point before the next team event.
-
 
 #A flag for testing code.
 #When True, all match logic will be ignored.
@@ -35,17 +33,14 @@ DEBUGGING = True
 if TESTING or DEBUGGING:
     import random
     from math import sqrt
-    
 
-    import EvilGlobals #Only needed for rendering.
+    import GlobalRendering #Only needed for rendering.
     from StateSetting import *
     from BallPrediction import *
     from Mechanics import CancelledFastDodge, aerial_rotation
     from Maneuvers import GroundTurn
     from Pathing.ArcLineArc import ArcLineArc
     from Simulation import *
-
-
 
 class BooleanAlgebraCow(BaseAgent):
 
@@ -76,9 +71,7 @@ class BooleanAlgebraCow(BaseAgent):
 
         #This will be used to remember opponent actions.  Maybe load in opponent bots preemptively one day?
         self.memory = None
-
-        #These are used to specify or set states in the code.  State setting
-        #using state.copy_state() didn't work as expected.
+        #These are used to specify or set states in the code.
         self.zero_ball_state = BallState(pos = None,
                                          rot = None,
                                          vel = None,
@@ -96,13 +89,8 @@ class BooleanAlgebraCow(BaseAgent):
                                        double_jumped = None,
                                        boost = None,
                                        jumped_last_frame = None)
-
-
         self.persistent = PersistentMechanics()
         self.my_timer = 0
-
-        #Exception variables that hopefully don't get used
-        self.Body_ID_Exception = False
         
         #Put testing-only variables here
         if TESTING:
@@ -114,18 +102,8 @@ class BooleanAlgebraCow(BaseAgent):
             self.old_game_info = None
             self.dodge = None
             self.path_target = None
-            #self.state = "Reset"
-            #self.path_plan = "ArcLineArc"
-            #self.path_switch = True
 
     def get_output(self, packet: GameTickPacket) -> SimpleControllerState:
-
-        ###############################################################################################
-        #Exception handling - better keep track of when things might go wrong,
-        #but in a way we want our bot to ignore.
-        ###############################################################################################
-
-        #I guess we don't need this anymore, because someone finally decided to tell me information they should've told me a month ago when I asked... I'll keep it because it's a good spot to have in case we need it in the future.
 
         ###############################################################################################
         #Startup info - run once at start
@@ -153,7 +131,7 @@ class BooleanAlgebraCow(BaseAgent):
             utils.simulation.Game.set_mode("soccar")
 
             if TESTING or DEBUGGING:
-                EvilGlobals.renderer = self.renderer
+                GlobalRendering.renderer = self.renderer
 
 
         ###############################################################################################
@@ -201,37 +179,12 @@ class BooleanAlgebraCow(BaseAgent):
         #If we're in the first frame of an RLU mechanic, start up the object.
         #If we're finished with it, reset it to None
         ###
-        if self.persistent.aerial_turn.initialize:
-            self.persistent.aerial_turn.initialize = False
-            self.persistent.aerial_turn.action = RLU_AerialTurn(self.game_info.utils_game.my_car)
-            self.persistent.aerial_turn.action.target = rot_to_mat3(self.persistent.aerial_turn.target_orientation, self.game_info.team_sign)
-        elif not self.persistent.aerial_turn.check:
-            self.persistent.aerial_turn.action = None
-        self.persistent.aerial_turn.check = False
-        ###
-        if self.persistent.aerial.initialize:
-            self.persistent.aerial.initialize = False
-            self.persistent.aerial.action = RLU_Aerial(self.game_info.utils_game.my_car)
-            self.persistent.aerial.action.target = Vec3_to_vec3(self.persistent.aerial.target_location, self.game_info.team_sign)
-            self.persistent.aerial.action.arrival_time = self.persistent.aerial.target_time
-            self.persistent.aerial.action.up = Vec3_to_vec3(self.persistent.aerial.target_up, self.game_info.team_sign)
-        elif not self.persistent.aerial.check:
-            self.persistent.aerial.action = None
-        self.persistent.aerial.check = False
-        ###
-        
-        if not self.persistent.path_follower.check:
-            self.persistent.path_follower.action = None
-        self.persistent.path_follower.check = False
-        ###
-        if not self.persistent.dodge.check:
-            self.persistent.dodge.action = None
-        self.persistent.dodge.check = False
+        self.persistent = update_RLU_mechanics()
+
 
         ###############################################################################################
         #Testing 
         ###############################################################################################
-
 
         if TESTING:
 
@@ -302,7 +255,7 @@ class BooleanAlgebraCow(BaseAgent):
             ###
 
             elif self.state == TESTINGSTATES['CHOOSEPATH']:
-                EvilGlobals.draw_ball_path(self.game_info.ball_prediction)
+                GlobalRendering.draw_ball_path(self.game_info.ball_prediction)
                 #If we don't already have a path, plan one
                 self.persistent.path_follower.check = True
                 intercept_slice, self.persistent.path_follower.path, self.persistent.path_follower.action = ball_contact_binary_search(self.game_info, end_tangent = Vec3(0,1,0))
@@ -361,7 +314,6 @@ class BooleanAlgebraCow(BaseAgent):
                                                 self.prediction,
                                                 self.persistent)
 
-
         ###############################################################################################
         #Update previous frame variables and return
         ###############################################################################################
@@ -374,25 +326,56 @@ class BooleanAlgebraCow(BaseAgent):
             output.throttle = 0.01
 
         #Making sure that RLU output is interpreted properly as an input for RLBot
-        framework_output = SimpleControllerState()
-        framework_output.throttle = output.throttle
-        framework_output.steer = output.steer
-        framework_output.yaw = output.yaw
-        framework_output.pitch = output.pitch
-        framework_output.roll = output.roll
-        framework_output.boost = output.boost
-        framework_output.handbrake = output.handbrake
-        framework_output.jump = output.jump
+        framework_output = finalize_output(output)
         return framework_output
 
 
+###############################################################################################
+#
+###############################################################################################
+
+def finalize_output(output):
+    framework_output = SimpleControllerState()
+    framework_output.throttle = output.throttle
+    framework_output.steer = output.steer
+    framework_output.yaw = output.yaw
+    framework_output.pitch = output.pitch
+    framework_output.roll = output.roll
+    framework_output.boost = output.boost
+    framework_output.handbrake = output.handbrake
+    framework_output.jump = output.jump
+
+    return framework_output
+
+###############################################################################################
 
 
+def update_RLU_mechanics(persistent,
+                         game_info):
+    if persistent.aerial_turn.initialize:
+        persistent.aerial_turn.initialize = False
+        persistent.aerial_turn.action = RLU_AerialTurn(game_info.utils_game.my_car)
+        persistent.aerial_turn.action.target = rot_to_mat3(persistent.aerial_turn.target_orientation, game_info.team_sign)
+    elif not persistent.aerial_turn.check:
+        persistent.aerial_turn.action = None
+    persistent.aerial_turn.check = False
+    ###
+    if persistent.aerial.initialize:
+        persistent.aerial.initialize = False
+        persistent.aerial.action = RLU_Aerial(game_info.utils_game.my_car)
+        persistent.aerial.action.target = Vec3_to_vec3(persistent.aerial.target_location, game_info.team_sign)
+        persistent.aerial.action.arrival_time = persistent.aerial.target_time
+        persistent.aerial.action.up = Vec3_to_vec3(persistent.aerial.target_up, game_info.team_sign)
+    elif not persistent.aerial.check:
+        persistent.aerial.action = None
+    persistent.aerial.check = False
+    ###
+    if not persistent.path_follower.check:
+        persistent.path_follower.action = None
+    persistent.path_follower.check = False
+    ###
+    if not persistent.dodge.check:
+        persistent.dodge.action = None
+    persistent.dodge.check = False
 
-        
-
-
-
-
-
-    
+    return persistent

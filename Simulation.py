@@ -200,34 +200,6 @@ def moving_ball_dodge_contact(game_info):
 
 
 ##############################################################
-##############################################################
-
-def linear_time_to_reach(current_state,
-                         location,
-                         game_time):
-    '''
-    Returns how long it will take to drive to the given location.
-    Currently supports only locations more or less directly in front, holding boost while we have it.
-    '''
-
-    distance = (location.to_2d() - current_state.pos.to_2d()).magnitude()
-
-    sim_pos = 0
-    sim_vel = current_state.vel.to_2d().magnitude()
-    sim_time = game_time
-    dt = 1/60 #Doesn't need to be the FPS, just a convenient value
-    while sim_pos < distance:
-        sim_pos += sim_vel*dt
-        if current_state.boost > 33.3 * sim_time:
-            accel = boost_acceleration(sim_vel)
-        else:
-            accel = throttle_acceleration(sim_vel)
-        sim_vel += accel*dt
-        sim_time += dt
-    return sim_time
-
-
-##############################################################
 #Helper functions
 ##############################################################
 

@@ -18,7 +18,7 @@ from Pathing.LineArcLine import LineArcLine
 from Pathing.LineArcPath import LineArcPath
 from Pathing.WaypointPath import WaypointPath
 
-import EvilGlobals #Only needed for rendering
+import GlobalRendering #Only needed for rendering
 
 #############################################################################################
 

@@ -12,7 +12,7 @@ from rlutilities.simulation import Curve, ControlPoint
 
 from Conversions import Vec3_to_vec3, vec3_to_Vec3
 from CowBotVector import Vec3
-import EvilGlobals
+import GlobalRendering
 from Miscellaneous import cap_magnitude, min_radius
 from Pathing.Pathing import GroundPath, PathPiece
 from Pathing.ArcPath import ArcPath
@@ -176,11 +176,11 @@ class ArcLineArc(GroundPath):
         angle2 = atan2( direction2.y , direction2.x )
 
         #Draw the path to make sure we got the right one.
-        EvilGlobals.renderer.begin_rendering()
-        EvilGlobals.renderer.draw_line_3d(point1, point2, EvilGlobals.renderer.red())
-        EvilGlobals.renderer.draw_polyline_3d( EvilGlobals.draw_arc_3d(self.center1, abs(self.radius1), angle1, - self.sgn1*self.phi1, 30), EvilGlobals.renderer.red())
-        EvilGlobals.renderer.draw_polyline_3d( EvilGlobals.draw_arc_3d(self.center2, abs(self.radius2), angle2, - self.sgn2*self.phi2, 30), EvilGlobals.renderer.red() )
-        EvilGlobals.renderer.end_rendering()
+        GlobalRendering.renderer.begin_rendering()
+        GlobalRendering.renderer.draw_line_3d(point1, point2, GlobalRendering.renderer.red())
+        GlobalRendering.renderer.draw_polyline_3d( GlobalRendering.draw_arc_3d(self.center1, abs(self.radius1), angle1, - self.sgn1*self.phi1, 30), GlobalRendering.renderer.red())
+        GlobalRendering.renderer.draw_polyline_3d( GlobalRendering.draw_arc_3d(self.center2, abs(self.radius2), angle2, - self.sgn2*self.phi2, 30), GlobalRendering.renderer.red() )
+        GlobalRendering.renderer.end_rendering()
 
     #############################################################################################
 

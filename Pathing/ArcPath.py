@@ -14,7 +14,7 @@ from Conversions import Vec3_to_vec3
 from CowBotVector import Vec3
 from Pathing.Pathing import GroundPath, PathPiece
 
-import EvilGlobals
+import GlobalRendering
 
 
 #############################################################################################
@@ -86,9 +86,9 @@ class ArcPath(GroundPath):
 
         center_list = [ self.center.x, self.center.y, self.center.z ]
         #Draw the path to make sure we got the right one.
-        EvilGlobals.renderer.begin_rendering()
-        EvilGlobals.renderer.draw_polyline_3d( EvilGlobals.draw_arc_3d(self.center, self.radius, start_angle, - direction*self.phi, 60), EvilGlobals.renderer.red())
-        EvilGlobals.renderer.end_rendering()
+        GlobalRendering.renderer.begin_rendering()
+        GlobalRendering.renderer.draw_polyline_3d( GlobalRendering.draw_arc_3d(self.center, self.radius, start_angle, - direction*self.phi, 60), GlobalRendering.renderer.red())
+        GlobalRendering.renderer.end_rendering()
 
 
 

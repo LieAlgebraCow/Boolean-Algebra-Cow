@@ -187,39 +187,6 @@ class FrameworkPredictionSlice:
 #Useful prediction functions - unrelated to the above classes.
 ###############################################################################################
 
-def rendezvous_prediction(game_info, min_time, persistent):
-    '''
-    Updates the place and time we will be contacting the ball
-    '''
-
-    prediction = game_info.ball_prediction
-
-    for i in range(0, len(prediction.slices), 2):
-        
-        aerial = Aerial(game_info.utils_game.my_car)
-        
-        #if prediction.slices[i].pos.z > 150:# and prediction.slices[i].time > min_time:
-        aerial.target = Vec3_to_vec3(prediction.slices[i].pos, game_info.team_sign)
-        aerial.arrival_time = prediction.slices[i].time
-        simulation = aerial.simulate()
-        if (vec3_to_Vec3(simulation.location, game_info.team_sign) - vec3_to_Vec3(aerial.target, game_info.team_sign)).magnitude() < 30:
-            persistent.aerial.target_location = prediction.slices[i].pos
-            persistent.aerial.target_time = prediction.slices[i].time
-            break
-
-        #else:
-        ''' This currently isn't defined, so we're going to skip it for now.
-        if prediction.time - game_info.game_time > drive_time(game_info,
-        prediction.location,
-        game_info.me.boost):
-        persistent.hit_ball.action.target = prediction.location
-        persistent.hit_ball.action.arrival_time = prediction.time
-        break
-        '''
-
-    return persistent
-
-############################################
 
 def get_ball_arrival(game_info,
                      condition):
@@ -424,29 +391,6 @@ def ball_contact_binary_search(game_info = None,
 ###########################################################################################
 ###########################################################################################
 
-
-def linear_is_too_early(game_info, index, prediction_slice):
-    '''
-    Leaving index as an option so that we can check opponents and teammates too
-    '''
-    drive_time = linear_time_to_reach(game_info.me,
-                                      game_info.ball.pos,
-                                      game_info.game_time)
-    return drive_time > prediction_slice.time
-
-###############################################
-
-def find_next_bounce(prediction, time):
-    '''
-    Returns the first bounce in the ball prediction after the current time
-    '''
-
-    bounces = prediction.check_bounces()
-    for i in range(len(bounces)):
-        if bounces[i].time > time:
-            return bounces[i]
-
-###############################################
 
 def ball_changed_course(game_info = None,
                         plan = None,

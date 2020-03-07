@@ -11,7 +11,7 @@ from rlbot.agents.base_agent import SimpleControllerState
 from CowBotVector import Vec3
 from Pathing.Pathing import GroundPath, PathPiece
 
-import EvilGlobals
+import GlobalRendering
 #############################################################################################
 
 #############################################################################################
@@ -121,12 +121,12 @@ class LineArcLine(GroundPath):
 
         center_list = [ self.center.x, self.center.y, self.center.z ]
         #Draw the path to make sure we got the right one.
-        EvilGlobals.renderer.begin_rendering()
-        EvilGlobals.renderer.draw_line_3d(point1, point2, EvilGlobals.renderer.red())
-        EvilGlobals.renderer.draw_polyline_3d( EvilGlobals.draw_arc_3d(self.center, self.radius, start_angle, - direction*self.phi, 60), EvilGlobals.renderer.red())
-        EvilGlobals.renderer.draw_line_3d(point3, point4, EvilGlobals.renderer.red())
-        EvilGlobals.renderer.draw_rect_3d(center_list, 3, 3, True, EvilGlobals.renderer.red())
-        EvilGlobals.renderer.end_rendering()
+        GlobalRendering.renderer.begin_rendering()
+        GlobalRendering.renderer.draw_line_3d(point1, point2, GlobalRendering.renderer.red())
+        GlobalRendering.renderer.draw_polyline_3d( GlobalRendering.draw_arc_3d(self.center, self.radius, start_angle, - direction*self.phi, 60), GlobalRendering.renderer.red())
+        GlobalRendering.renderer.draw_line_3d(point3, point4, GlobalRendering.renderer.red())
+        GlobalRendering.renderer.draw_rect_3d(center_list, 3, 3, True, GlobalRendering.renderer.red())
+        GlobalRendering.renderer.end_rendering()
 
 
     def check_validity(self):
