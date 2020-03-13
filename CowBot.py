@@ -20,7 +20,6 @@ from Kickoffs.Kickoff import Kickoff, update_kickoff_position
 from Mechanics import PersistentMechanics, FrontDodge
 from Miscellaneous import predict_for_time
 from Pathing.PathPlanning import shortest_arclinearc
-import States
 import Strategy
 
 #A flag for testing code.
@@ -28,8 +27,8 @@ import Strategy
 #Planning will still take place, but can be overridden,
 #and no action will be taken outside of the "if TESTING:" blocks.
 
-TESTING = True
-DEBUGGING = True
+TESTING = False
+DEBUGGING = False
 if TESTING or DEBUGGING:
     import random
     from math import sqrt
@@ -104,6 +103,9 @@ class BooleanAlgebraCow(BaseAgent):
             self.path_target = None
 
     def get_output(self, packet: GameTickPacket) -> SimpleControllerState:
+        output = SimpleControllerState()
+        output.throttle = 1
+        return output
 
         ###############################################################################################
         #Startup info - run once at start
@@ -167,10 +169,11 @@ class BooleanAlgebraCow(BaseAgent):
                                                             self.plan.old_plan,
                                                             self.plan.path,
                                                             self.persistent)
-
+            
             #Check if it's a kickoff.  If so, we'll run kickoff code later on.
             self.kickoff_position = update_kickoff_position(self.game_info,
                                                             self.kickoff_position)
+            print(self.kickoff_position)
 
         ###############################################################################################
         #Update RLU Mechanics as needed
