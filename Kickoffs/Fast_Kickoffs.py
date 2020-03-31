@@ -117,7 +117,7 @@ def offcenter(game_info = None,
         #If we're far away, fast dodge to speed up.
         controller_input = CancelledFastDodge(current_state, Vec3(1, x_sign, 0)).input()
   
-    elif abs(current_state.pos.y) > 300 and current_state.double_jumped:
+    elif abs(current_state.pos.y) > 355 and current_state.double_jumped:
         if persistent.aerial_turn.action == None:
             persistent.aerial_turn.initialize = True
             vector_to_ball = game_info.ball.pos - current_state.pos
@@ -132,7 +132,7 @@ def offcenter(game_info = None,
                                                            persistent)
         controller_input.boost = 1
 
-    elif abs(current_state.pos.y) > 300:
+    elif abs(current_state.pos.y) > 355:
         controller_input = GroundTurn(current_state, current_state.copy_state(pos = Vec3(0,-team_sign*100,0))).input()
   
     else: 
@@ -189,7 +189,7 @@ def diagonal(game_info = None,
     elif abs(current_state.pos.y) > 500 and not current_state.double_jumped:
         #If we've taken the boost but are still far away, fast dodge to speed up
         controller_input = CancelledFastDodge(current_state, Vec3(1, x_sign, 0)).input()
-  
+
     elif abs(current_state.pos.y) > 250 and not current_state.wheel_contact:
         if persistent.aerial_turn.action == None:
             persistent.aerial_turn.initialize = True
@@ -197,14 +197,14 @@ def diagonal(game_info = None,
                                      yaw = current_state.rot.yaw,
                                      roll = 0)
             persistent.aerial_turn.target_orientation = target_rot
-  
+
         else:
             controller_input, persistent = aerial_rotation(game_info.dt,
                                                                 persistent)
         controller_input.boost = 1
         controller_input.steer = x_sign #Turn into the ball
   
-    elif abs(current_state.pos.y) > 250:
+    elif abs(current_state.pos.y) > 235:
         controller_input.throttle = 1
         controller_input.boost = 1
         controller_input.steer = x_sign

@@ -14,9 +14,7 @@ from Conversions import Vec3_to_vec3, vec3_to_Vec3
 from CowBotVector import Vec3
 import GlobalRendering
 from Miscellaneous import cap_magnitude, min_radius
-from Pathing.Pathing import GroundPath, PathPiece
-from Pathing.ArcPath import ArcPath
-from Pathing.LineArcPath import LineArcPath
+from Pathing.Pathing import GroundPath
 
 
 #############################################################################################
@@ -181,40 +179,6 @@ class ArcLineArc(GroundPath):
         GlobalRendering.renderer.draw_polyline_3d( GlobalRendering.draw_arc_3d(self.center1, abs(self.radius1), angle1, - self.sgn1*self.phi1, 30), GlobalRendering.renderer.red())
         GlobalRendering.renderer.draw_polyline_3d( GlobalRendering.draw_arc_3d(self.center2, abs(self.radius2), angle2, - self.sgn2*self.phi2, 30), GlobalRendering.renderer.red() )
         GlobalRendering.renderer.end_rendering()
-
-    #############################################################################################
-
-    def update_path(self, current_state):
-
-        if self.path_following_state == "First Arc":
-            path = ArcLineArc(start = self.start,
-                              end = self.end,
-                              start_tangent = self.start_tangent,
-                              end_tangent = self.end_tangent,
-                              radius1 = self.radius1,
-                              radius2 = self.radius2,
-                              current_state = current_state)
-
-            if (self.current_state.pos - path.transition1).magnitude() < 150:
-                path.path_following_state = "Switch to Line"
-            else:
-                path.path_following_state = "First Arc"
-                
-                ##############################
-                
-        elif self.path_following_state == "Switch to Line":
-            #If we're on the first frame of the line segment,
-            #match everything up accoringly, then go over to normal "Line" following
-            path = LineArcPath(start = current_state.pos,
-                               start_tangent = current_state.rot.front,
-                               end = self.end,
-                               end_tangent = self.end_tangent,
-                               radius = self.radius2,
-                               current_state = current_state)
-            path.path_following_state = "Line"
-
-        return path
-
 
     #############################################################################################
         

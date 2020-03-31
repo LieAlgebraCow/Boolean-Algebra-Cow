@@ -250,7 +250,7 @@ class CancelledFastDodge:
             controller_input.boost = 1
             return controller_input
 
-        if not self.double_jumped:
+        elif not self.double_jumped:
             #If we haven't double jumped yet, dodge
             return AirDodge(self.dodge_direction, self.current_state.jumped_last_frame).input()
 

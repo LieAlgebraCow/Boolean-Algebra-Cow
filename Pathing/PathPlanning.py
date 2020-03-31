@@ -13,10 +13,6 @@ from rlutilities.mechanics import FollowPath
 from CowBotVector import Vec3
 from Miscellaneous import rotate_to_range, min_radius
 from Pathing.ArcLineArc import ArcLineArc
-from Pathing.ArcPath import ArcPath
-from Pathing.LineArcLine import LineArcLine
-from Pathing.LineArcPath import LineArcPath
-from Pathing.WaypointPath import WaypointPath
 
 import GlobalRendering #Only needed for rendering
 

@@ -8,7 +8,6 @@ from CowBotVector import Vec3
 from Miscellaneous import min_radius
 from Pathing.ArcLineArc import ArcLineArc
 from Pathing.PathPlanning import shortest_arclinearc
-from Simulation import linear_time_to_reach
 
 
 #############################################################################################

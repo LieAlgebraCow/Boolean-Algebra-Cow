@@ -17,7 +17,8 @@ class GameState:
                   ball_prediction = None,
                   teammate_indices = None,
                   opponent_indices = None,
-                  my_old_inputs = None ):
+                  my_old_inputs = None,
+                  rigid_body_tick = None ):
 
         self.my_name = packet.game_cars[my_index].name
 
@@ -104,13 +105,13 @@ class GameState:
         self.mirror_boost_list = [0, 2, 1, 4, 3, 6, 5, 7, 9, 8, 11, 10, 14, 13, 12, 18, 17, 16,
                                   15, 21, 20, 19, 23, 22, 25, 24, 26, 28, 27, 30, 29, 32, 31, 33]
 
-
         #Other Game info
         self.game_time = packet.game_info.seconds_elapsed
         if utils_game != None:
             self.utils_game = utils_game
             self.dt = utils_game.time_delta
             self.utils_game.read_game_information(packet,
+                                                  rigid_body_tick,
                                                   field_info)
         else:
             self.dt = 1/120

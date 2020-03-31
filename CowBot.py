@@ -4,6 +4,7 @@ import random
 
 from rlbot.agents.base_agent import BaseAgent, SimpleControllerState
 from rlbot.utils.structures.game_data_struct import GameTickPacket
+
 import rlutilities as utils
 from rlutilities.mechanics import AerialTurn as RLU_AerialTurn
 from rlutilities.mechanics import Aerial as RLU_Aerial
@@ -14,13 +15,11 @@ from rlutilities.simulation import Curve
 from BallPrediction import PredictionPath, ball_contact_binary_search
 from Conversions import Vec3_to_vec3, rot_to_mat3
 from Cowculate import Cowculate 
-from GamePlan import GamePlan
 from GameState import BallState, CarState, GameState, Hitbox, Orientation
 from Kickoffs.Kickoff import Kickoff, update_kickoff_position
 from Mechanics import PersistentMechanics, FrontDodge
 from Miscellaneous import predict_for_time
 from Pathing.PathPlanning import shortest_arclinearc
-import States
 import Strategy
 
 #A flag for testing code.
@@ -28,8 +27,8 @@ import Strategy
 #Planning will still take place, but can be overridden,
 #and no action will be taken outside of the "if TESTING:" blocks.
 
-TESTING = True
-DEBUGGING = True
+TESTING = False
+DEBUGGING = False
 if TESTING or DEBUGGING:
     import random
     from math import sqrt
@@ -41,6 +40,7 @@ if TESTING or DEBUGGING:
     from Maneuvers import GroundTurn
     from Pathing.ArcLineArc import ArcLineArc
     from Simulation import *
+    import Kickoffs.Fast_Kickoffs
 
 class BooleanAlgebraCow(BaseAgent):
 
@@ -64,7 +64,7 @@ class BooleanAlgebraCow(BaseAgent):
         self.path = None
         self.waypoint_index = 2
 
-        self.plan = GamePlan()
+        self.plan = None
         self.old_kickoff_data = None
         self.utils_game = None
         self.old_inputs = SimpleControllerState()
@@ -94,7 +94,7 @@ class BooleanAlgebraCow(BaseAgent):
         
         #Put testing-only variables here
         if TESTING:
-            self.state = TESTINGSTATES['RESET']
+            self.state = 'RESET'
             self.target_loc = None
             self.target_time = None
             self.takeoff_time = None
@@ -154,23 +154,17 @@ class BooleanAlgebraCow(BaseAgent):
                                     ball_prediction = self.prediction,
                                     teammate_indices = self.teammate_indices,
                                     opponent_indices = self.opponent_indices,
-                                    my_old_inputs = self.old_inputs )
+                                    my_old_inputs = self.old_inputs,
+                                    rigid_body_tick = self.get_rigid_body_tick() )
 
         ###############################################################################################
         #Planning
         ###############################################################################################
 
         if not TESTING:
-            #For now everything is a 1v1.  I'll fix team code again in the future.
-            #if self.game_info.team_mode == "1v1":
-            self.plan, self.persistent = Strategy.make_plan(self.game_info,
-                                                            self.plan.old_plan,
-                                                            self.plan.path,
-                                                            self.persistent)
-
-            #Check if it's a kickoff.  If so, we'll run kickoff code later on.
-            self.kickoff_position = update_kickoff_position(self.game_info,
-                                                            self.kickoff_position)
+            self.top_level_decisions.update()
+            return self.top_level_decisions.get_controls()
+            
 
         ###############################################################################################
         #Update RLU Mechanics as needed
@@ -178,8 +172,7 @@ class BooleanAlgebraCow(BaseAgent):
 
         #If we're in the first frame of an RLU mechanic, start up the object.
         #If we're finished with it, reset it to None
-        ###
-        self.persistent = update_RLU_mechanics()
+        self.persistent = update_RLU_mechanics(self.persistent, self.game_info)
 
 
         ###############################################################################################
@@ -191,85 +184,57 @@ class BooleanAlgebraCow(BaseAgent):
             #Copy-paste from a testing file here
             output = SimpleControllerState()
             current_state = self.game_info.me
-            ball_distance = (self.game_info.ball.pos - current_state.pos).magnitude()
 
             ###
 
             #Reset the testing position
-            if self.state == TESTINGSTATES['RESET']:
+            if self.state == 'RESET':
                 output = SimpleControllerState()
                 self.my_timer = 0
                 self.RESET = False                    
                 
                 #Reset to a stationary setup when the bot is reloaded
                 ball_pos = Vec3(0, 1500, 120)
-                ball_state = self.zero_ball_state.copy_state(pos = ball_pos,
-                                                             rot = Orientation(pyr = [0,0,0]),
-                                                             vel = Vec3(0, -1000, 0),
+                ball_state = self.zero_ball_state.copy_state(pos = Vec3(0,0,92.75),
+                                                             vel = Vec3(0,0,0),
                                                              omega = Vec3(0,0,0))
-                car_pos = Vec3(1500, 500, 18.65)
-                car_vel = Vec3(0, 0, 0)
 
                 #Set car state
+                car_pos = Vec3(256, -3840, 18.65)
+                car_vel = Vec3(0, 0, 0)
                 car_state = self.zero_car_state.copy_state(pos = car_pos,
                                                            vel = car_vel,
                                                            rot = Orientation(pitch = 0,
-                                                                             yaw = 3*pi/2,
+                                                                             yaw = pi/2,
                                                                              roll = 0),
                                                            boost = 100)
                 self.set_game_state(set_state(self.game_info,
                                               current_state = car_state,
                                               ball_state = ball_state))
 
-                self.state = TESTINGSTATES['WAIT']
+                self.state = 'WAIT'
 
             ###
 
-            elif self.state == TESTINGSTATES['WAIT']:
+            elif self.state == 'WAIT':
                 self.my_timer += 0.00833
                 #Wait for state setting to work
                 output = SimpleControllerState()
                 if self.my_timer < 0.2:
-                    car_pos = Vec3(1500, 500, 18.65)
-                    car_vel = Vec3(0, 0, 0)
-                    car_state = self.zero_car_state.copy_state(pos = car_pos,
-                                                               vel = car_vel,
-                                                               rot = Orientation(pitch = 0,
-                                                                                 yaw = 3*pi/2,
-                                                                                 roll = 0),
-                                                               boost = 100)
+                    pass
 
-                    ball_pos = Vec3(0, 1500, 520)
-                    ball_state = self.zero_ball_state.copy_state(pos = ball_pos,
-                                                                 rot = Orientation(pyr = [0,0,0]),
-                                                                 vel = Vec3(0, -1000, 0),
-                                                                 omega = Vec3(0,0,0))
-                    
-                    
-                    self.set_game_state(set_state(self.game_info,
-                                                  current_state = car_state,
-                                                  ball_state = ball_state))
                 else:
-                    self.state = TESTINGSTATES['CHOOSEPATH']
+                    self.state = 'KICKOFF'
 
             ###
 
-            elif self.state == TESTINGSTATES['CHOOSEPATH']:
-                GlobalRendering.draw_ball_path(self.game_info.ball_prediction)
-                #If we don't already have a path, plan one
-                self.persistent.path_follower.check = True
-                intercept_slice, self.persistent.path_follower.path, self.persistent.path_follower.action = ball_contact_binary_search(self.game_info, end_tangent = Vec3(0,1,0))
-                if self.persistent.path_follower.action != None:
-                    self.state = TESTINGSTATES['FOLLOWPATH']
+            elif self.state == 'KICKOFF':
+                output, self.persistent = Kickoffs.Fast_Kickoffs.offcenter(self.game_info,
+                                                                          -1,
+                                                                          self.persistent)            
 
-            ###
-
-            elif self.state == TESTINGSTATES['FOLLOWPATH']:
-                #If we're far from the end of the path, follow the path
-                #Follow the ArcLineArc path
-                self.persistent.path_follower.check = True
-                self.persistent.path_follower.action.step(self.game_info.dt)
-                output = self.persistent.path_follower.action.controls
+            self.old_inputs = output
+            return output
 
 
             #####################################
@@ -294,7 +259,7 @@ class BooleanAlgebraCow(BaseAgent):
         #Run either Kickoff or Cowculate
         ###############################################################################################
 
-        if self.plan.layers[0] == "Kickoff":
+        if self.game_info.is_kickoff_pause == True:
             if self.old_kickoff_data != None:
                 self.kickoff_data = Kickoff(self.game_info,
                                             self.kickoff_position,
@@ -352,6 +317,7 @@ def finalize_output(output):
 
 def update_RLU_mechanics(persistent,
                          game_info):
+
     if persistent.aerial_turn.initialize:
         persistent.aerial_turn.initialize = False
         persistent.aerial_turn.action = RLU_AerialTurn(game_info.utils_game.my_car)

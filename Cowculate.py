@@ -15,9 +15,8 @@ from GameState import Orientation
 from Maneuvers import GroundTurn, NavigateTo
 from Mechanics import aerial, aerial_rotation, AirDodge, FrontDodge
 from Miscellaneous import angles_are_close, cap_magnitude, car_coordinates_2d
-from Simulation import linear_time_to_reach
 
-import EvilGlobals #Only needed for rendering and debugging
+import GlobalRendering #Only needed for rendering and debugging
 
 
 def Cowculate(plan, game_info, ball_prediction, persistent):

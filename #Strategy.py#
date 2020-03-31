@@ -12,11 +12,11 @@ class StateMachine:
         self.current_state = None
 
 
-    def add_state(state):
+    def add_state(self, state):
         self.current_states = state
 
 
-    def update(game_info):
+    def update(self, game_info):
         self.current_state = self.current_state.transition(game_info)
 
 
