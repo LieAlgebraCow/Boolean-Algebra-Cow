@@ -46,11 +46,11 @@ class GameState:
         self.ball_prediction = ball_prediction
 
         #My car info
-        self.me = Car(packet = packet,
-                      hitboxes = hitboxes,
-                      jumped_last_frame = me_jumped_last_frame,
-                      index = my_index,
-                      team_sign = self.team_sign)
+        self.me = CarState(packet = packet,
+                           hitboxes = hitboxes,
+                           jumped_last_frame = me_jumped_last_frame,
+                           index = my_index,
+                           team_sign = self.team_sign)
         self.my_index = my_index
 
         #Other car info
@@ -60,15 +60,15 @@ class GameState:
         for i in range(packet.num_cars):
             if i != my_index:
                 if i in teammate_indices:
-                    self.teammates.append(Car(packet = packet,
-                                              hitboxes = hitboxes,
-                                              index = i,
-                                              team_sign = self.team_sign))
+                    self.teammates.append(CarState(packet = packet,
+                                                   hitboxes = hitboxes,
+                                                   index = i,
+                                                   team_sign = self.team_sign))
                 else:
-                    self.opponents.append(Car(packet = packet,
-                                              hitboxes = hitboxes,
-                                              index = i,
-                                              team_sign = self.team_sign))
+                    self.opponents.append(CarState(packet = packet,
+                                                   hitboxes = hitboxes,
+                                                   index = i,
+                                                   team_sign = self.team_sign))
         self.team_mode = None
         if len(self.teammates) == 0:
             self.team_mode = "1v1"
@@ -340,92 +340,80 @@ class BallState:
 #Car
 ##################################################################################
 
-def Car(packet = None,
-        hitboxes = None,
-        jumped_last_frame = None,
-        index = None,
-        team_sign = None):
-
-    '''
-    Gets the game info for a given car, and returns the values.  Should be fed into a CarState object.
-    '''
-    this_car = packet.game_cars[index]
-    pos = Vec3( team_sign*this_car.physics.location.x,
-                team_sign*this_car.physics.location.y,
-                this_car.physics.location.z )
-    
-    pitch = this_car.physics.rotation.pitch
-    yaw = this_car.physics.rotation.yaw
-    if team_sign == -1:
-        yaw = rotate_to_range(this_car.physics.rotation.yaw + pi, [-pi, pi])
-    roll = this_car.physics.rotation.roll
-    rot = Orientation( pitch = pitch,
-                            yaw = yaw,
-                            roll = roll )
-
-    vel = Vec3( team_sign*this_car.physics.velocity.x,
-                team_sign*this_car.physics.velocity.y,
-                this_car.physics.velocity.z )
-    
-    omega = Vec3( team_sign*this_car.physics.angular_velocity.x,
-                  team_sign*this_car.physics.angular_velocity.y,
-                  this_car.physics.angular_velocity.z )
-
-    demo = this_car.is_demolished
-    wheel_contact = this_car.has_wheel_contact
-    supersonic = this_car.is_super_sonic
-    jumped = this_car.jumped
-    double_jumped = this_car.double_jumped
-    boost = this_car.boost
-
-    hitbox_class = Hitbox(this_car)
-    return CarState( pos = pos,
-                     rot = rot,
-                     vel = vel,
-                     omega = omega,
-                     demo = demo,
-                     wheel_contact = wheel_contact,
-                     supersonic = supersonic,
-                     jumped = jumped,
-                     double_jumped = double_jumped,
-                     boost = boost,
-                     jumped_last_frame = jumped_last_frame,
-                     index = index,
-                     hitbox_class = hitbox_class )
-
-
 class CarState:
 
-    def __init__( self,
-                  pos = None,
-                  rot = None,
-                  vel = None,
-                  omega = None,
-                  demo = None,
-                  wheel_contact = None,
-                  supersonic = None,
-                  jumped = None,
-                  double_jumped = None,
-                  boost = None,
-                  jumped_last_frame = None,
-                  index = None,
-                  hitbox_class = None ):
+    def __init__(self,
+                 packet = None,
+                 hitboxes = None,
+                 index = None,
+                 team_sign = None,
+                 label = None,
+                 pos = None,
+                 rot = None,
+                 vel = None,
+                 omega = None,
+                 demo = None,
+                 wheel_contact = None,
+                 supersonic = None,
+                 jumped = None,
+                 double_jumped = None,
+                 boost = None,
+                 jumped_last_frame = None,
+                 hitbox_class = None):
 
-        self.pos = pos
-        self.rot = rot
-        self.vel = vel
-        self.omega = omega
+        '''
+        Gets the game info for a given car, and returns the values.  Should be fed into a CarState object.
+        Never call directly: Only in GameState.__init__() or via CarState.copy_state()
+        '''
 
-        self.demo = demo
-        self.wheel_contact = wheel_contact
-        self.supersonic = supersonic
-        self.jumped = jumped
-        self.double_jumped = double_jumped
-        self.boost = boost
-        self.index = index
-        self.hitbox_class = hitbox_class
+        if packet != None:
+            this_car = packet.game_cars[index]
+            self.pos = Vec3( team_sign*this_car.physics.location.x,
+                        team_sign*this_car.physics.location.y,
+                        this_car.physics.location.z )
+            
+            yaw = this_car.physics.rotation.yaw
+            if team_sign == -1:
+                yaw = rotate_to_range(this_car.physics.rotation.yaw + pi, [-pi, pi])
+            pitch = this_car.physics.rotation.pitch
+            roll = this_car.physics.rotation.roll
+            self.rot = Orientation( pitch = pitch,
+                                    yaw = yaw,
+                                    roll = roll )
+            self.vel = Vec3( team_sign*this_car.physics.velocity.x,
+                        team_sign*this_car.physics.velocity.y,
+                        this_car.physics.velocity.z )
+            self.omega = Vec3( team_sign*this_car.physics.angular_velocity.x,
+                          team_sign*this_car.physics.angular_velocity.y,
+                          this_car.physics.angular_velocity.z )
+            self.demo = this_car.is_demolished
+            self.wheel_contact = this_car.has_wheel_contact
+            self.supersonic = this_car.is_super_sonic
+            self.jumped = this_car.jumped
+            self.double_jumped = this_car.double_jumped
+            self.boost = this_car.boost
+            self.hitbox_class = Hitbox(this_car)
+     
+            self.jumped_last_frame = jumped_last_frame
+            self.index = index
+            self.label = label
 
-        self.jumped_last_frame = jumped_last_frame
+        else:
+            self.pos = pos
+            self.rot = rot
+            self.vel = vel
+            self.omega = omega
+        
+            self.demo = demo
+            self.wheel_contact = wheel_contact
+            self.supersonic = supersonic
+            self.jumped = jumped
+            self.double_jumped = double_jumped
+            self.boost = boost
+            self.index = index
+            self.hitbox_class = hitbox_class
+        
+            self.jumped_last_frame = jumped_last_frame
 
 
     #Return a copy of the CarState object, but with given values changed.
@@ -436,7 +424,7 @@ class CarState:
                    omega = None,
                    rot = None,
                    boost = None):
-
+        
         if pos != None:
             new_pos = pos
         else:
@@ -476,6 +464,7 @@ class CarState:
                         jumped_last_frame = self.jumped_last_frame,
                         index = self.index)
 
+
 ##################################################################################
 
 ##################################################################################
@@ -502,3 +491,42 @@ class Hitbox:
         self.widths = [ car.hitbox.length, car.hitbox.width, car.hitbox.height ]
         self.offset = [ car.hitbox_offset.x, car.hitbox_offset.y, car.hitbox_offset.z ]
         self.half_widths = [ width / 2 for width in self.widths ]
+
+
+##################################################################################
+
+##################################################################################
+
+'''
+class Teammate(CarState):
+
+    def __init__(self,
+                 packet = None,
+                 hitboxes = None,
+                 jumped_last_frame = None,
+                 index = None,
+                 team_sign = None,
+                 label = None):
+        self.label = label
+
+
+class Opponent(CarState):
+    
+    def __init__(self,
+                 packet = None,
+                 hitboxes = None,
+                 jumped_last_frame = None,
+                 index = None,
+                 team_sign = None,
+                 label = None):
+        self.label = label
+'''
+
+
+
+
+
+
+
+
+

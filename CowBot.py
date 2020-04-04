@@ -20,7 +20,8 @@ from Kickoffs.Kickoff import Kickoff, update_kickoff_position
 from Mechanics import PersistentMechanics, FrontDodge
 from Miscellaneous import predict_for_time
 from Pathing.PathPlanning import shortest_arclinearc
-import Strategy
+import StateMachine
+import Strategy.Strategy as Strategy
 
 #A flag for testing code.
 #When True, all match logic will be ignored.
@@ -30,15 +31,12 @@ import Strategy
 TESTING = False
 DEBUGGING = False
 if TESTING or DEBUGGING:
-    import random
     from math import sqrt
 
-    import GlobalRendering #Only needed for rendering.
+    import GlobalRendering
     from StateSetting import *
-    from BallPrediction import *
     from Mechanics import CancelledFastDodge, aerial_rotation
     from Maneuvers import GroundTurn
-    from Pathing.ArcLineArc import ArcLineArc
     from Simulation import *
     import Kickoffs.Fast_Kickoffs
 
@@ -57,51 +55,49 @@ class BooleanAlgebraCow(BaseAgent):
         self.opponent_indices = []
 
         self.game_info = None
-        self.kickoff_position = "Other"
-        self.kickoff_data = None
+        self.kickoff_data = None #Try to put inside kickoff function transitions
         self.jumped_last_frame = None
-        self.path_state = 'Reset'
-        self.path = None
-        self.waypoint_index = 2
+        self.top_level_decisions = StateMachine.StateMachine("Top Level Decisions")
+        self.top_level_decisions.add_state(Strategy.KickoffState)
+        self.top_level_decisions.states = [Strategy.KickoffState,
+                                           Strategy.AttackState,
+                                           Strategy.TransitionBackState,
+                                           Strategy.DefendState,
+                                           Strategy.TransitionForwardState]
 
-        self.plan = None
-        self.old_kickoff_data = None
+        self.old_kickoff_data = None #Try to put inside kickoff function transitions
         self.utils_game = None
         self.old_inputs = SimpleControllerState()
 
-        #This will be used to remember opponent actions.  Maybe load in opponent bots preemptively one day?
+        #This will be used to remember opponent actions.  Possibly internal to decision making?
         self.memory = None
         #These are used to specify or set states in the code.
-        self.zero_ball_state = BallState(pos = None,
-                                         rot = None,
-                                         vel = None,
-                                         omega = None,
-                                         latest_touch = None,
-                                         hit_location = None)
-        self.zero_car_state = CarState(pos = None,
-                                       rot = None,
-                                       vel = None,
-                                       omega = None,
-                                       demo = None,
-                                       wheel_contact = None,
-                                       supersonic = None,
-                                       jumped = None,
-                                       double_jumped = None,
-                                       boost = None,
-                                       jumped_last_frame = None)
         self.persistent = PersistentMechanics()
-        self.my_timer = 0
-        
+
         #Put testing-only variables here
         if TESTING:
-            self.state = 'RESET'
-            self.target_loc = None
-            self.target_time = None
-            self.takeoff_time = None
-            self.start_time = None
-            self.old_game_info = None
+            self.testing_state = 'RESET'
             self.dodge = None
             self.path_target = None
+
+            self.zero_ball_state = BallState(pos = None,
+                                             rot = None,
+                                             vel = None,
+                                             omega = None,
+                                             latest_touch = None,
+                                             hit_location = None)
+            self.zero_car_state = CarState(pos = None,
+                                           rot = None,
+                                           vel = None,
+                                           omega = None,
+                                           demo = None,
+                                           wheel_contact = None,
+                                           supersonic = None,
+                                           jumped = None,
+                                           double_jumped = None,
+                                           boost = None,
+                                           jumped_last_frame = None)
+
 
     def get_output(self, packet: GameTickPacket) -> SimpleControllerState:
 
@@ -156,23 +152,6 @@ class BooleanAlgebraCow(BaseAgent):
                                     opponent_indices = self.opponent_indices,
                                     my_old_inputs = self.old_inputs,
                                     rigid_body_tick = self.get_rigid_body_tick() )
-
-        ###############################################################################################
-        #Planning
-        ###############################################################################################
-
-        if not TESTING:
-            self.top_level_decisions.update()
-            return self.top_level_decisions.get_controls()
-            
-
-        ###############################################################################################
-        #Update RLU Mechanics as needed
-        ###############################################################################################
-
-        #If we're in the first frame of an RLU mechanic, start up the object.
-        #If we're finished with it, reset it to None
-        self.persistent = update_RLU_mechanics(self.persistent, self.game_info)
 
 
         ###############################################################################################
@@ -256,39 +235,15 @@ class BooleanAlgebraCow(BaseAgent):
 
 
         ###############################################################################################
-        #Run either Kickoff or Cowculate
+        #Run the state machine and process its output
         ###############################################################################################
 
-        if self.game_info.is_kickoff_pause == True:
-            if self.old_kickoff_data != None:
-                self.kickoff_data = Kickoff(self.game_info,
-                                            self.kickoff_position,
-                                            self.old_kickoff_data.memory,
-                                            self.persistent)
-            else:
-                self.kickoff_data = Kickoff(self.game_info,
-                                            self.kickoff_position,
-                                            None,
-                                            self.persistent)
-
-            output, self.persistent = self.kickoff_data.input()
-
-        else:
-            output, self.persistent = Cowculate(self.plan,
-                                                self.game_info,
-                                                self.prediction,
-                                                self.persistent)
-
-        ###############################################################################################
-        #Update previous frame variables and return
-        ###############################################################################################
+        #print(self.top_level_decisions.current_state.name)
+        self.top_level_decisions.update(self.game_info) #Update the state machine for the current frame
+        output = self.top_level_decisions.get_controls(self.game_info) #return controls from that state
 
         self.old_kickoff_data = self.kickoff_data
         self.old_inputs = output
-
-        #Make sure we don't get stuck turtling. Not sure how effective this is.
-        if output.throttle == 0:
-            output.throttle = 0.01
 
         #Making sure that RLU output is interpreted properly as an input for RLBot
         framework_output = finalize_output(output)
