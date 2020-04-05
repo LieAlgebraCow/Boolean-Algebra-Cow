@@ -20,12 +20,8 @@ from Kickoffs.Kickoff import Kickoff, update_kickoff_position
 from Mechanics import PersistentMechanics, FrontDodge
 from Miscellaneous import predict_for_time
 from Pathing.PathPlanning import shortest_arclinearc
-<<<<<<< HEAD
 import StateMachine
 import Strategy.Strategy as Strategy
-=======
-import Strategy
->>>>>>> d807998d5b29ed797f506524d7665858fd7ed4f4
 
 #A flag for testing code.
 #When True, all match logic will be ignored.
@@ -104,9 +100,6 @@ class BooleanAlgebraCow(BaseAgent):
 
 
     def get_output(self, packet: GameTickPacket) -> SimpleControllerState:
-        output = SimpleControllerState()
-        output.throttle = 1
-        return output
 
         ###############################################################################################
         #Startup info - run once at start
@@ -157,38 +150,8 @@ class BooleanAlgebraCow(BaseAgent):
                                     ball_prediction = self.prediction,
                                     teammate_indices = self.teammate_indices,
                                     opponent_indices = self.opponent_indices,
-<<<<<<< HEAD
                                     my_old_inputs = self.old_inputs,
                                     rigid_body_tick = self.get_rigid_body_tick() )
-=======
-                                    my_old_inputs = self.old_inputs )
-
-        ###############################################################################################
-        #Planning
-        ###############################################################################################
-
-        if not TESTING:
-            #For now everything is a 1v1.  I'll fix team code again in the future.
-            #if self.game_info.team_mode == "1v1":
-            self.plan, self.persistent = Strategy.make_plan(self.game_info,
-                                                            self.plan.old_plan,
-                                                            self.plan.path,
-                                                            self.persistent)
-            
-            #Check if it's a kickoff.  If so, we'll run kickoff code later on.
-            self.kickoff_position = update_kickoff_position(self.game_info,
-                                                            self.kickoff_position)
-            print(self.kickoff_position)
-
-        ###############################################################################################
-        #Update RLU Mechanics as needed
-        ###############################################################################################
-
-        #If we're in the first frame of an RLU mechanic, start up the object.
-        #If we're finished with it, reset it to None
-        ###
-        self.persistent = update_RLU_mechanics()
->>>>>>> d807998d5b29ed797f506524d7665858fd7ed4f4
 
 
         ###############################################################################################
