@@ -39,6 +39,7 @@ if TESTING or DEBUGGING:
     from Maneuvers import GroundTurn
     from Simulation import *
     import Kickoffs.Fast_Kickoffs
+    from Conversions import Vec3_to_Vector3
 
 class BooleanAlgebraCow(BaseAgent):
 
@@ -64,6 +65,7 @@ class BooleanAlgebraCow(BaseAgent):
                                            Strategy.TransitionBackState,
                                            Strategy.DefendState,
                                            Strategy.TransitionForwardState]
+        self.top_level_decisions.current_state.sub_state_machine = StateMachine.StateMachine("Kickoff Position")
 
         self.old_kickoff_data = None #Try to put inside kickoff function transitions
         self.utils_game = None
@@ -107,7 +109,6 @@ class BooleanAlgebraCow(BaseAgent):
 
         #Initialization info
         if self.is_init:
-            self.is_init = False
             self.field_info = self.get_field_info()
             self.match_settings = self.get_match_settings()
  
@@ -153,6 +154,14 @@ class BooleanAlgebraCow(BaseAgent):
                                     my_old_inputs = self.old_inputs,
                                     rigid_body_tick = self.get_rigid_body_tick() )
 
+        if self.is_init:
+            self.is_init = False
+
+            #Set the state for the initial kickoff
+            startup = self.top_level_decisions.current_state.startup(self.game_info)
+            self.top_level_decisions.current_state.sub_state_machine.add_state(startup[0])
+            self.top_level_decisions.current_state.sub_state_machine.states = startup[1]
+            
 
         ###############################################################################################
         #Testing 
@@ -244,6 +253,17 @@ class BooleanAlgebraCow(BaseAgent):
 
         self.old_kickoff_data = self.kickoff_data
         self.old_inputs = output
+
+        if TESTING or DEBUGGING:
+            self.renderer.begin_rendering()
+            self.renderer.draw_string_3d([self.game_info.me.pos.x,
+                                          self.game_info.me.pos.y,
+                                          self.game_info.me.pos.z],
+                                         1,
+                                         1,
+                                         self.top_level_decisions.current_state.name,
+                                         self.renderer.red())
+            self.renderer.end_rendering()
 
         #Making sure that RLU output is interpreted properly as an input for RLBot
         framework_output = finalize_output(output)

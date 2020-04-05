@@ -13,7 +13,7 @@ KickoffState = State(lambda game_info, next_states, sub_sm: Kickoff.transition(g
                     lambda game_info, sub_state_machine: Kickoff.get_controls(game_info,
                                                                               sub_state_machine),
                      "Kickoff",
-                     True)
+                     False)
 AttackState = State(lambda game_info, next_states, sub_sm: Attack.transition(game_info,
                                                                              next_states,
                                                                              sub_sm),

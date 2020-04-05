@@ -57,7 +57,7 @@ def transition(game_info,
 
     def transition_to_defend(game_info):
      
-        if far_post_distance < 500:
+        if far_post_distance < 750 and game_info.me.pos.y < -4950:
             return True
         return False
 

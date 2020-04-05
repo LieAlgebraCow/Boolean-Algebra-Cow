@@ -54,7 +54,7 @@ def transition(game_info,
 
 def startup(game_info):
 
-    pass
+    return None, None
 
 ##########################################################################
 
@@ -66,7 +66,7 @@ def get_controls(game_info, sub_state_machine):
     ball_angle = atan2((game_info.ball.pos - game_info.me.pos).y,
                        (game_info.ball.pos - game_info.me.pos).x)
     rot = Orientation(pyr = [game_info.me.rot.pitch, ball_angle, game_info.me.rot.roll] )
-    target_state = game_info.me.copy_state(pos = Vec3(-1050*ball_x_sign,-5120+140,0), rot = rot)
+    target_state = game_info.me.copy_state(pos = Vec3(-1450*ball_x_sign,-5120+140,0), rot = rot)
     controls = NavigateTo(game_info.me, target_state).input()
 
     return controls
