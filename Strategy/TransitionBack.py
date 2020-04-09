@@ -57,7 +57,7 @@ def transition(game_info,
 
     def transition_to_defend(game_info):
      
-        if far_post_distance < 750 and game_info.me.pos.y < -4950:
+        if game_info.me.pos.y < -4500:
             return True
         return False
 
@@ -94,7 +94,7 @@ def transition(game_info,
     for i in range(len(state_transitions)):
         if state_transitions[i](game_info):
             return next_states[i]
-        
+
 
 ##########################################################################
 
@@ -106,8 +106,8 @@ def startup(game_info):
                   BoostPadState,
                   GoalState]
 
-
-    return state, state_list
+    persistent = game_info.persistent
+    return state, state_list, persistent
 
 ##########################################################################
 

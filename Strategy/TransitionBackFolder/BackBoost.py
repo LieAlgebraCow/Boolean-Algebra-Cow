@@ -22,14 +22,15 @@ def transition(game_info,
 
     def transition_to_boost_pad(game_info):
 
-        ball_x_sign = sign(game_info.ball.pos.x)
-
-        if ball_x_sign == 1:
-            far_mid_boost = game_info.boosts[15]
+        if game_info.ball_x_sign == 1:
+            far_back_boost = game_info.boosts[3]
         else:
-            far_mid_boost = game_info.boosts[18]
+            far_back_boost = game_info.boosts[4]
 
         if game_info.me.boost > 60:
+            return True
+
+        if not far_back_boost.is_active:
             return True
         return False
 
@@ -55,17 +56,19 @@ def transition(game_info,
 
 def startup(game_info):
 
-    return None, None
+    state = None
+    state_list = None
 
+    persistent = game_info.persistent
+    return state, state_list, persistent
+    
 ##########################################################################
 
 def get_controls(game_info, sub_state_machine):
 
     controls = SimpleControllerState()
 
-    ball_x_sign = sign(game_info.ball.pos.x)
-
-    if ball_x_sign == 1:
+    if game_info.ball_x_sign == 1:
         far_back_boost = game_info.boosts[3]
     else:
         far_back_boost = game_info.boosts[4]
@@ -73,5 +76,7 @@ def get_controls(game_info, sub_state_machine):
     controls = GroundTurn(game_info.me,
                           game_info.me.copy_state(pos = far_back_boost.pos)).input()
 
-    return controls
+    persistent = game_info.persistent
+    return controls, persistent
+
 

@@ -6,7 +6,6 @@ from rlbot.agents.base_agent import BaseAgent, SimpleControllerState
 from rlbot.utils.structures.game_data_struct import GameTickPacket
 
 import rlutilities as utils
-from rlutilities.mechanics import AerialTurn as RLU_AerialTurn
 from rlutilities.mechanics import Aerial as RLU_Aerial
 from rlutilities.mechanics import Dodge as RLU_Dodge
 from rlutilities.mechanics import FollowPath as RLU_FollowPath
@@ -29,7 +28,7 @@ import Strategy.Strategy as Strategy
 #and no action will be taken outside of the "if TESTING:" blocks.
 
 TESTING = False
-DEBUGGING = False
+DEBUGGING = True
 if TESTING or DEBUGGING:
     from math import sqrt
 
@@ -59,13 +58,12 @@ class BooleanAlgebraCow(BaseAgent):
         self.kickoff_data = None #Try to put inside kickoff function transitions
         self.jumped_last_frame = None
         self.top_level_decisions = StateMachine.StateMachine("Top Level Decisions")
-        self.top_level_decisions.add_state(Strategy.KickoffState)
+        self.top_level_decisions.add_state(Strategy.InitializeState)
         self.top_level_decisions.states = [Strategy.KickoffState,
                                            Strategy.AttackState,
                                            Strategy.TransitionBackState,
                                            Strategy.DefendState,
                                            Strategy.TransitionForwardState]
-        self.top_level_decisions.current_state.sub_state_machine = StateMachine.StateMachine("Kickoff Position")
 
         self.old_kickoff_data = None #Try to put inside kickoff function transitions
         self.utils_game = None
@@ -152,15 +150,16 @@ class BooleanAlgebraCow(BaseAgent):
                                     teammate_indices = self.teammate_indices,
                                     opponent_indices = self.opponent_indices,
                                     my_old_inputs = self.old_inputs,
-                                    rigid_body_tick = self.get_rigid_body_tick() )
+                                    rigid_body_tick = self.get_rigid_body_tick(),
+                                    persistent = self.persistent)
 
         if self.is_init:
             self.is_init = False
 
             #Set the state for the initial kickoff
             startup = self.top_level_decisions.current_state.startup(self.game_info)
-            self.top_level_decisions.current_state.sub_state_machine.add_state(startup[0])
-            self.top_level_decisions.current_state.sub_state_machine.states = startup[1]
+            #self.top_level_decisions.current_state.sub_state_machine.add_state(startup[0])
+            #self.top_level_decisions.current_state.sub_state_machine.states = startup[1]
             
 
         ###############################################################################################
@@ -249,12 +248,13 @@ class BooleanAlgebraCow(BaseAgent):
 
         #print(self.top_level_decisions.current_state.name)
         self.top_level_decisions.update(self.game_info) #Update the state machine for the current frame
-        output = self.top_level_decisions.get_controls(self.game_info) #return controls from that state
+        output, self.game_info.persistent = self.top_level_decisions.get_controls(self.game_info) #return controls from that state
 
         self.old_kickoff_data = self.kickoff_data
         self.old_inputs = output
+        self.persistent = self.game_info.persistent
 
-        if TESTING or DEBUGGING:
+        if TESTING or DEBUGGING: #Render current state
             self.renderer.begin_rendering()
             self.renderer.draw_string_3d([self.game_info.me.pos.x,
                                           self.game_info.me.pos.y,
@@ -263,7 +263,15 @@ class BooleanAlgebraCow(BaseAgent):
                                          1,
                                          self.top_level_decisions.current_state.name,
                                          self.renderer.red())
+            self.renderer.draw_string_3d([self.game_info.me.pos.x,
+                                          self.game_info.me.pos.y,
+                                          self.game_info.me.pos.z-100-max(0, (self.game_info.me.pos.y + 5120)/25)],
+                                         1,
+                                         1,
+                                         self.top_level_decisions.bottom_state().name,
+                                         self.renderer.red())
             self.renderer.end_rendering()
+
 
         #Making sure that RLU output is interpreted properly as an input for RLBot
         framework_output = finalize_output(output)
@@ -286,37 +294,3 @@ def finalize_output(output):
     framework_output.jump = output.jump
 
     return framework_output
-
-###############################################################################################
-
-
-def update_RLU_mechanics(persistent,
-                         game_info):
-
-    if persistent.aerial_turn.initialize:
-        persistent.aerial_turn.initialize = False
-        persistent.aerial_turn.action = RLU_AerialTurn(game_info.utils_game.my_car)
-        persistent.aerial_turn.action.target = rot_to_mat3(persistent.aerial_turn.target_orientation, game_info.team_sign)
-    elif not persistent.aerial_turn.check:
-        persistent.aerial_turn.action = None
-    persistent.aerial_turn.check = False
-    ###
-    if persistent.aerial.initialize:
-        persistent.aerial.initialize = False
-        persistent.aerial.action = RLU_Aerial(game_info.utils_game.my_car)
-        persistent.aerial.action.target = Vec3_to_vec3(persistent.aerial.target_location, game_info.team_sign)
-        persistent.aerial.action.arrival_time = persistent.aerial.target_time
-        persistent.aerial.action.up = Vec3_to_vec3(persistent.aerial.target_up, game_info.team_sign)
-    elif not persistent.aerial.check:
-        persistent.aerial.action = None
-    persistent.aerial.check = False
-    ###
-    if not persistent.path_follower.check:
-        persistent.path_follower.action = None
-    persistent.path_follower.check = False
-    ###
-    if not persistent.dodge.check:
-        persistent.dodge.action = None
-    persistent.dodge.check = False
-
-    return persistent

@@ -10,30 +10,61 @@ class StateMachine:
 
     def update(self, game_info):
         old_state = self.current_state
+        if self.current_state == None: #Debug catch
+            print(self.name)
         transition_state = self.current_state.transition(game_info,
                                                          self.states,
                                                          self.current_state.sub_state_machine)
 
-        if (old_state == None) or (transition_state.name != old_state.name):
-            if not transition_state.is_bottom:
+        if (transition_state.name != old_state.name): #Changed states at this level
+            if not transition_state.is_bottom: #More underneath of the new state
                 self.current_state = transition_state
-                self.current_state.sub_state_machine = StateMachine("Hello") #Generate name based on level
 
+                #Make everything that needs to be under the new state
+                self.current_state.sub_state_machine = StateMachine(self.current_state.name)
                 startup = self.current_state.startup(game_info)
+                if type(startup) == State:
+                    print(startup, startup.name, self.current_state.name)
                 self.current_state.sub_state_machine.add_state(startup[0])
                 self.current_state.sub_state_machine.states = startup[1]
-            else:
+                persistent = startup[2]
+
+                #Update recursively
+                self.current_state.sub_state_machine.update(game_info)
+
+            else: #We're at the bottom
                 self.current_state = transition_state
-                
+                startup = self.current_state.startup(game_info) #Run startup because it's a new state
+                if type(startup) == State:
+                    print(startup, startup.name, self.current_state.name)
+                persistent = startup[2]
+
+        else: #Kept the same state at this level
+            if not self.current_state.is_bottom: #There's more underneath
+                if self.current_state.sub_state_machine != None: #The next level down already exists
+                    self.current_state.sub_state_machine.update(game_info)
+                else: #The next level down doesn't already exist
+
+                    #Make and start up the next level down
+                    self.current_state.sub_state_machine = StateMachine(self.current_state.name)
+                    startup = self.current_state.startup(game_info)
+                    self.current_state.sub_state_machine.add_state(startup[0])
+                    self.current_state.sub_state_machine.states = startup[1]
+                    persistent = startup[2]
+
+                    #Update recursively
+                    self.current_state.sub_state_machine.update(game_info)
+
 
     def get_controls(self, game_info):
+        #Debug: print(self.current_state.name)
         return self.current_state.get_controls(game_info, self.current_state.sub_state_machine)
 
     def bottom_state(self):
         if self.current_state.sub_state_machine == None:
             return self.current_state
         else:
-            return self.current_state.sub_state_machine.bottom_state
+            return self.current_state.sub_state_machine.bottom_state()
 
 
 class State:
@@ -79,7 +110,4 @@ class State:
 
 
         temp_startup = self.prestartup(game_info)
-        if temp_startup[0] == None:
-            return self
-        else:
-            return temp_startup
+        return temp_startup

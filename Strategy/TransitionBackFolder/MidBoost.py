@@ -28,6 +28,9 @@ def transition(game_info,
         if not far_mid_boost.is_active: #TODO: If it won't be active by time we get there
             return True
 
+
+        if game_info.me.pos.y > -1000:
+            return True
     #If someone will get there before us, go for back boost
 
         return False
@@ -75,7 +78,11 @@ def transition(game_info,
 
 def startup(game_info):
 
-    return None, None
+    state = None
+    state_list = None
+
+    persistent = game_info.persistent
+    return state, state_list, persistent
 
 ##########################################################################
 
@@ -93,5 +100,7 @@ def get_controls(game_info, sub_state_machine):
 
     controls = GroundTurn(game_info.me,
                           game_info.me.copy_state(pos = far_mid_boost.pos)).input()
-    return controls
+
+    persistent = game_info.persistent
+    return controls, persistent
 

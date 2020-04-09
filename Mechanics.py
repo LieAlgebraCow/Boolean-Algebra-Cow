@@ -62,43 +62,6 @@ class Mechanic:
 #############################################################################################
 
 
-def aerial(dt, team_sign, persistent):
-    '''
-    Takes a time delta (float), a team sign (+1 for blue, or -1 or orange) and a PersistentMechanics object.
-    Returns contoller input and an updated PersistentMechanics object for the next frame.
-    These are the steps to access RLUtilities' Aerial functions. All the math happens there.
-    '''
-    persistent.aerial.check = True
-    persistent.aerial.action.step(dt)
-    controller_input = persistent.aerial.action.controls
-
-    return controller_input, persistent
-
-
-#############################################################################################
-
-#############################################################################################
-
-
-def aerial_rotation(dt, persistent):
-    '''
-    Takes a target Orientation object, a time delta (float), and a PersistentMechanics object.
-    Returns contoller input and an updated PersistentMechanics object for the next frame.
-    These are the steps to access RLUtilities' AerialTurn functions. All the math happens there.
-    '''
-    persistent.aerial_turn.check = True
-    persistent.aerial_turn.action.step(dt)
-    controller_input = persistent.aerial_turn.action.controls
-
-    return controller_input, persistent
-
-
-#############################################################################################
-
-#############################################################################################
-
-
-
 class AirDodge:
     '''
     Handles inputting air dodges. 

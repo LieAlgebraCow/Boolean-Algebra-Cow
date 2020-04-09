@@ -4,6 +4,7 @@ import Strategy.Attack as Attack
 import Strategy.TransitionBack as TransitionBack
 import Strategy.Defend as Defend
 import Strategy.TransitionForward as TransitionForward
+import Strategy.Initialize as Initialize
 
 
 KickoffState = State(lambda game_info, next_states, sub_sm: Kickoff.transition(game_info,
@@ -21,7 +22,7 @@ AttackState = State(lambda game_info, next_states, sub_sm: Attack.transition(gam
                     lambda game_info, sub_state_machine: Attack.get_controls(game_info,
                                                                              sub_state_machine),
                     "Attack",
-                    True)
+                    False)
 TransitionBackState = State(lambda game_info, next_states, sub_sm: TransitionBack.transition(game_info,
                                                                                              next_states,
                                                                                              sub_sm),
@@ -37,7 +38,7 @@ DefendState = State(lambda game_info, next_states, sub_sm: Defend.transition(gam
                     lambda game_info, sub_state_machine: Defend.get_controls(game_info,
                                                                              sub_state_machine),
                     "Defend",
-                    True)
+                    False)
 TransitionForwardState = State(lambda game_info, next_states, sub_sm: TransitionForward.transition(game_info,
                                                                                            next_states,
                                                                                            sub_sm),
@@ -47,3 +48,10 @@ TransitionForwardState = State(lambda game_info, next_states, sub_sm: Transition
                                True)
 
 
+InitializeState = State(lambda game_info, next_states, sub_sm: Initialize.transition(game_info,
+                                                                                           next_states,
+                                                                                           sub_sm),
+                               lambda game_info: Initialize.startup(game_info),
+                               lambda game_info, sub_state_machine: Initialize.get_controls(game_info, sub_state_machine),
+                               "Initialize",
+                               True)

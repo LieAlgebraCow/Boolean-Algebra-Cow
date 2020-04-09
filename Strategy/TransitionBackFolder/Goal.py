@@ -54,7 +54,11 @@ def transition(game_info,
 
 def startup(game_info):
 
-    return None, None
+    state = None
+    state_list = None
+
+    persistent = game_info.persistent
+    return state, state_list, persistent
 
 ##########################################################################
 
@@ -69,5 +73,6 @@ def get_controls(game_info, sub_state_machine):
     target_state = game_info.me.copy_state(pos = Vec3(-1450*ball_x_sign,-5120+140,0), rot = rot)
     controls = NavigateTo(game_info.me, target_state).input()
 
-    return controls
+    persistent = game_info.persistent
+    return controls, persistent
 

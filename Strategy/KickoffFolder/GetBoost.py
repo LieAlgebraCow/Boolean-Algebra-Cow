@@ -1,5 +1,31 @@
 from rlbot.agents.base_agent import SimpleControllerState
 
+from CowBotVector import Vec3
+from StateMachine import State
+import Strategy.KickoffFolder.GetBoostFolder.LeftBoost as LeftBoost
+import Strategy.KickoffFolder.GetBoostFolder.RightBoost as RightBoost
+
+
+
+##########################################################################
+
+LeftBoostState = State(lambda game_info, next_states, sub_sm: LeftBoost.transition(game_info,
+                                                                                 next_states,
+                                                                                 sub_sm),
+                      lambda game_info: LeftBoost.startup(game_info),
+                      lambda game_info, sub_state_machine: LeftBoost.get_controls(game_info, sub_state_machine),
+                      "LeftBoost",
+                      True)
+RightBoostState = State(lambda game_info, next_states, sub_sm: RightBoost.transition(game_info,
+                                                                                 next_states,
+                                                                                 sub_sm),
+                      lambda game_info: RightBoost.startup(game_info),
+                      lambda game_info, sub_state_machine: RightBoost.get_controls(game_info, sub_state_machine),
+                      "RightBoost",
+                      True)
+
+##########################################################################
+
 def transition(game_info,
                next_states,
                sub_state_machine):
@@ -31,14 +57,22 @@ def transition(game_info,
 
 def startup(game_info):
 
-    return None, None
+    state = None
+    if game_info.me.pos.x > 0:
+        state = LeftBoostState
+    else:
+        state = RightBoostState
+        
+    state_list = [LeftBoostState,
+                  RightBoostState]
+    persistent = game_info.persistent
+    return state, state_list, persistent
+
 
 ##########################################################################
 
 def get_controls(game_info, sub_state_machine):
 
-    controls = SimpleControllerState()
-    controls.throttle = 1
+    return sub_state_machine.get_controls(game_info)
 
-    return controls
 

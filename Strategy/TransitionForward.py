@@ -4,17 +4,16 @@ def transition(game_info,
                next_states,
                sub_state_machine):
 
+    def transition_to_kickoff(game_info): #Could be a few of these
+        if game_info.is_kickoff_pause:
+            return True
+        return False
+
     ##########################
 
     def transition_to_attack(game_info):
      
         return True
-
-    ##########################    
-    def transition_to_kickoff(game_info): #Could be a few of these
-        if game_info.is_kickoff_pause:
-            return True
-        return False
 
     ##########################
 
@@ -49,7 +48,11 @@ def transition(game_info,
 
 def startup(game_info):
 
-    return None, None
+    state = None
+    state_list = None
+
+    persistent = game_info.persistent
+    return state, state_list, persistent
 
 
 ##########################################################################
@@ -57,4 +60,7 @@ def startup(game_info):
 def get_controls(game_info, sub_state_machine):
     controls = SimpleControllerState()
     controls.throttle = 1
-    return controls
+
+    persistent = game_info.persistent
+    return controls, persistent
+

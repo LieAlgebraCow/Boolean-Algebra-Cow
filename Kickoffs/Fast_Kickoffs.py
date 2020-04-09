@@ -92,9 +92,6 @@ def offcenter(game_info = None,
     ball = game_info.ball
     team_sign = game_info.team_sign
 
-    ball_angle = atan2((ball.pos - current_state.pos).y,
-                      (ball.pos - current_state.pos).x)
-    offset = Vec3(x_sign*team_sign*750,0,0)
     ball = game_info.ball
 
     #Set which boost we want based on team and side.
@@ -151,44 +148,32 @@ def offcenter(game_info = None,
 def diagonal(game_info = None,
              x_sign = None,
              persistent = None):
-    
-    current_state = game_info.me
-    controller_input = SimpleControllerState()
-    ball_angle = atan2((game_info.ball.pos - current_state.pos).y,
-                       (game_info.ball.pos - current_state.pos).x)
-    offset = Vec3(x_sign*game_info.team_sign*750,0,0)
 
-    
+    current_state = game_info.me
+    controls = SimpleControllerState()
+
     #Set which boost we want based on team and side.
-    if game_info.team_sign == 1:
-        if x_sign == -1:
-            first_boost = 11
-        else:
-            first_boost = 10
+    if x_sign == -1:
+        first_boost = 11
     else:
-        if x_sign == -1:
-            first_boost = 22
-        else:
-            first_boost = 23
-  
-  
+        first_boost = 10
+
     if game_info.boosts[first_boost].is_active:
         #If we haven't taken the small boost yet, drive towards it
-        controller_input = GroundTurn(current_state,
+        controls = GroundTurn(current_state,
                                       current_state.copy_state(pos = Vec3(0, -1000, 0))).input()
-        controller_input.boost = 1
+        controls.boost = 1
   
     elif abs(current_state.pos.y) > 1100 and current_state.wheel_contact:
-        controller_input.jump = 1
-        controller_input.boost = 1
+        controls.jump = 1
+        controls.boost = 1
   
     elif abs(current_state.pos.y) > 1100 and current_state.pos.z < 40:
-        controller_input.jump = 1
-        controller_input.boost = 1
+        controls.jump = 1
+        controls.boost = 1
   
     elif abs(current_state.pos.y) > 500 and not current_state.double_jumped:
-        #If we've taken the boost but are still far away, fast dodge to speed up
-        controller_input = CancelledFastDodge(current_state, Vec3(1, x_sign, 0)).input()
+        controls = CancelledFastDodge(current_state, Vec3(1, x_sign, 0)).input()
 
     elif abs(current_state.pos.y) > 250 and not current_state.wheel_contact:
         if persistent.aerial_turn.action == None:
@@ -199,21 +184,21 @@ def diagonal(game_info = None,
             persistent.aerial_turn.target_orientation = target_rot
 
         else:
-            controller_input, persistent = aerial_rotation(game_info.dt,
+            controls, persistent = aerial_rotation(game_info.dt,
                                                                 persistent)
-        controller_input.boost = 1
-        controller_input.steer = x_sign #Turn into the ball
+        controls.boost = 1
+        controls.steer = x_sign #Turn into the ball
   
     elif abs(current_state.pos.y) > 235:
-        controller_input.throttle = 1
-        controller_input.boost = 1
-        controller_input.steer = x_sign
+        controls.throttle = 1
+        controls.boost = 1
+        controls.steer = x_sign
   
     else: 
-        controller_input = FrontDodge(current_state).input()
+        controls = FrontDodge(current_state).input()
 
     
-    return controller_input, persistent
+    return controls, persistent
 
 
 

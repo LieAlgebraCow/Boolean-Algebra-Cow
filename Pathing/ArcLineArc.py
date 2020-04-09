@@ -112,20 +112,12 @@ class ArcLineArc(GroundPath):
                 direction = 1
             else:
                 direction = -1
-            self.piece = PathPiece(shape = "Arc",
-                                   start = self.start,
-                                   end = self.transition1,
-                                   start_tangent = self.start_tangent,
-                                   end_tangent = (self.transition1 - self.start).normalize(),
-                                   direction = direction)
 
             self.to_Curve(team_sign)
             if self.path_is_out_of_bounds():
                 self.is_valid = False
             else:
                 self.is_valid = True
-
-
                 
             #self.draw_path()
 

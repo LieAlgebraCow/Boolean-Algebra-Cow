@@ -6,21 +6,25 @@ import Strategy.KickoffFolder.DoKickoff as DoKickoff
 import Strategy.KickoffFolder.GetBoost as GetBoost
 import Strategy.KickoffFolder.CoverNet as CoverNet
 
+########################################################################################################
+#States for the next level down
+########################################################################################################
+
 
 DoKickoffState = State(lambda game_info, next_states, sub_sm: DoKickoff.transition(game_info,
-                                                                                 next_states,
-                                                                                 sub_sm),
-                      lambda game_info: DoKickoff.startup(game_info),
-                      lambda game_info, sub_state_machine: DoKickoff.get_controls(game_info, sub_state_machine),
-                      "DoKickoff",
-                      True)
-GetBoostState = State(lambda game_info, next_states, sub_sm: GetBoost.transition(game_info,
                                                                                    next_states,
                                                                                    sub_sm),
-                       lambda game_info: GetBoost.startup(game_info),
-                       lambda game_info, sub_state_machine: GetBoost.get_controls(game_info, sub_state_machine),
-                       "GetBoost",
-                       True)
+                       lambda game_info: DoKickoff.startup(game_info),
+                       lambda game_info, sub_state_machine: DoKickoff.get_controls(game_info, sub_state_machine),
+                       "DoKickoff",
+                       False)
+GetBoostState = State(lambda game_info, next_states, sub_sm: GetBoost.transition(game_info,
+                                                                                 next_states,
+                                                                                 sub_sm),
+                      lambda game_info: GetBoost.startup(game_info),
+                      lambda game_info, sub_state_machine: GetBoost.get_controls(game_info, sub_state_machine),
+                      "GetBoost",
+                      False)
 CoverNetState = State(lambda game_info, next_states, sub_sm: CoverNet.transition(game_info,
                                                                                  next_states,
                                                                                  sub_sm),
@@ -29,6 +33,9 @@ CoverNetState = State(lambda game_info, next_states, sub_sm: CoverNet.transition
                       "CoverNet",
                       True)
 
+########################################################################################################
+#Transition functions
+########################################################################################################
 
 def transition(game_info,
                next_states,
@@ -52,18 +59,30 @@ def transition(game_info,
     ##########################
 
     def transition_to_attack(game_info):
+        #If we can get the next touch, and a teammate doesn't have a better one
 
-            return False
+        return False
 
     ##########################
 
     def transition_to_transition_back(game_info):
+        #Pretty much always go get boost
+        if sub_state_machine.current_state == DoKickoffState and not game_info.is_kickoff_pause:
+            #If we just took the kickoff and hit the ball, go get boost
+            return True
+
+        if sub_state_machine.current_state == GetBoostState and game_info.me.boost > 90:
+            #If we're going for boost, make sure we get it
+            return True
 
         return False
 
     ##########################
 
     def transition_to_defend(game_info):
+        if sub_state_machine.current_state == CoverNetState and not game_info.is_kickoff_pause:
+            #If we were waiting in net for the kickoff, go to DefendState after the ball is hit
+            return True
 
         return False
 
@@ -86,94 +105,63 @@ def transition(game_info,
             return next_states[i]
 
 
-##########################################################################
+########################################################################################################
+#Startup
+########################################################################################################
 
 def startup(game_info):
 
-    pos = game_info.me.pos
     state = None
-
-    #######################
-    #Check where our bot and our teammates are on kickoff
-
-    diagonal_left_spawn = Vec3(2048, -2560, 0)
-    diagonal_right_spawn = Vec3(-2048, -2560, 0)
-    offcenter_left_spawn = Vec3(256, -3840, 0)
-    offcenter_right_spawn = Vec3(-256, -3840, 0)
-    far_back_spawn = Vec3(0, -4608, 0)
-
-    me_diagonal_left = False
-    me_diagonal_right = False
-    me_offcenter_left = False
-    me_offcenter_right = False
-    me_far_back = False
-    
-    if (pos - diagonal_left_spawn).magnitude() < 50:
-        me_diagonal_left = True
-    elif (pos - diagonal_right_spawn).magnitude() < 50:
-        me_diagonal_right = True
-    elif (pos - offcenter_left_spawn).magnitude() < 50:
-        me_offcenter_left = True
-    elif (pos - offcenter_right_spawn).magnitude() < 50:
-        me_offcenter_right = True
-    elif (pos - far_back_spawn).magnitude() < 50:
-        me_far_back = True
-
-    teammate_diagonal_left = False
-    teammate_diagonal_right = False
-    teammate_offcenter_left = False
-    teammate_offcenter_right = False
-    teammate_far_back = False
-    
-    for mate in game_info.teammates:
-        if (mate.pos - diagonal_left_spawn).magnitude() < 50:
-            teammate_diagonal_left = True
-        elif (mate.pos - diagonal_right_spawn).magnitude() < 50:
-            teammate_diagonal_right = True
-        elif (mate.pos - offcenter_left_spawn).magnitude() < 50:
-            teammate_offcenter_left = True
-        elif (mate.pos - offcenter_right_spawn).magnitude() < 50:
-            teammate_offcenter_right = True
-        elif (mate.pos - far_back_spawn).magnitude() < 50:
-            teammate_far_back = True
 
     ############################
 
-    if me_diagonal_left:
+    print("Diagonal Left" , game_info.me_diagonal_left, game_info.me.pos)
+    print(game_info.me_diagonal_right)
+    print(game_info.me_offcenter_left)
+    print(game_info.me_offcenter_right)
+    print(game_info.me_far_back)
+
+
+
+    if game_info.me_diagonal_left:
         state = DoKickoffState
 
-    elif me_diagonal_right:
-        if not teammate_diagonal_left:
+    elif game_info.me_diagonal_right:
+        if not game_info.teammate_diagonal_left:
             state = DoKickoffState
         else:
             state = GetBoostState
 
-    elif me_offcenter_left:
-        if (not teammate_diagonal_left) and (not teammate_diagonal_right):
+    elif game_info.me_offcenter_left:
+        if (not game_info.teammate_diagonal_left) and (not game_info.teammate_diagonal_right):
             state = DoKickoffState
-        elif teammate_far_back:
+        elif game_info.teammate_far_back:
             state = GetBoostState
-        elif teammate_offcenter_right:
+        else:
             state = CoverNetState
 
-    elif me_offcenter_right:
-        if teammate_diagonal_left and teammate_diagonal_right:
+    elif game_info.me_offcenter_right:
+        if game_info.teammate_diagonal_left and game_info.teammate_diagonal_right:
             state = CoverNetState
         else:
             state = GetBoostState
         
-    elif me_far_back:
+    elif game_info.me_far_back:
         state = CoverNetState
+
     else:
-        raise ('no kickoff position chosen')
+        raise Exception('no kickoff position chosen')
 
     state_list = [DoKickoffState,
                   GetBoostState,
                   CoverNetState]
 
-    return state, state_list
+    persistent = game_info.persistent
+    return state, state_list, persistent
 
-##########################################################################
+########################################################################################################
+#Controls
+########################################################################################################
 
 def get_controls(game_info, sub_state_machine):
 

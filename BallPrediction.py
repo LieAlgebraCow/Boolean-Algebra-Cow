@@ -73,9 +73,9 @@ class PredictionPath:
     def check_on_net(self):
         #Check if at some point the ball is between the posts and behind the goal line.
         for step in self.slices:
-            if abs(step.x) < 800 and step.y > 5120 + self.ball_radius:
+            if abs(step.x) < 800 and step.y > 5120:# + self.ball_radius:
                 return 1, step.time
-            elif abs(step.x) < 800 and step.y < -5120 - self.ball_radius:
+            elif abs(step.x) < 800 and step.y < -5120:# - self.ball_radius:
                 return -1, step.time
         return False, None
 

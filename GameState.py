@@ -1,4 +1,5 @@
 from math import pi
+from numpy import sign
 
 from CowBotVector import Vec3
 from Conversions import *
@@ -18,13 +19,11 @@ class GameState:
                   teammate_indices = None,
                   opponent_indices = None,
                   my_old_inputs = None,
-                  rigid_body_tick = None ):
+                  rigid_body_tick = None,
+                  persistent = None):
 
         self.my_name = packet.game_cars[my_index].name
-
-
         self.is_kickoff_pause = packet.game_info.is_kickoff_pause
-        self.kickoff_position = "Other"
 
         #Team info
         self.my_team = my_team
@@ -40,6 +39,8 @@ class GameState:
 
         #The inputs this bot returned last frame.
         self.inputs = my_old_inputs
+
+        self.persistent = persistent
 
         #Ball info
         self.ball = Ball(packet, self.team_sign)
@@ -79,6 +80,87 @@ class GameState:
         else:
             self.team_mode = "Other"
 
+        ##################################################################
+
+        #Team kickoff positions
+        diagonal_left_spawn = Vec3(2048, -2560, 0)
+        diagonal_right_spawn = Vec3(-2048, -2560, 0)
+        offcenter_left_spawn = Vec3(256, -3840, 0)
+        offcenter_right_spawn = Vec3(-256, -3840, 0)
+        far_back_spawn = Vec3(0, -4608, 0)
+ 
+        self.me_diagonal_left = False
+        self.me_diagonal_right = False
+        self.me_offcenter_left = False
+        self.me_offcenter_right = False
+        self.me_far_back = False
+
+        if (self.me.pos - diagonal_left_spawn).magnitude() < 50:
+            self.me_diagonal_left = True
+        elif (self.me.pos - diagonal_right_spawn).magnitude() < 50:
+            self.me_diagonal_right = True
+        elif (self.me.pos - offcenter_left_spawn).magnitude() < 50:
+            self.me_offcenter_left = True
+        elif (self.me.pos - offcenter_right_spawn).magnitude() < 50:
+            self.me_offcenter_right = True
+        elif (self.me.pos - far_back_spawn).magnitude() < 50:
+            self.me_far_back = True
+ 
+        self.teammate_diagonal_left = False
+        self.teammate_diagonal_right = False
+        self.teammate_offcenter_left = False
+        self.teammate_offcenter_right = False
+        self.teammate_far_back = False
+        
+        for mate in self.teammates:
+            if (mate.pos - diagonal_left_spawn).magnitude() < 50:
+                self.teammate_diagonal_left = True
+            elif (mate.pos - diagonal_right_spawn).magnitude() < 50:
+                self.teammate_diagonal_right = True
+            elif (mate.pos - offcenter_left_spawn).magnitude() < 50:
+                self.teammate_offcenter_left = True
+            elif (mate.pos - offcenter_right_spawn).magnitude() < 50:
+                self.teammate_offcenter_right = True
+            elif (mate.pos - far_back_spawn).magnitude() < 50:
+                self.teammate_far_back = True
+
+        ##################################################################
+
+        self.ball_x_sign = sign(self.ball.pos.x)
+        self.teammate_far_post = False
+        self.teammate_in_net = False
+
+        far_post_pos = Vec3(-1050*self.ball_x_sign,-5120+140,0)
+        in_net_pos = Vec3(0, -5120-60, 0)
+
+        for mate in self.teammates:
+            if (mate.pos - far_post_pos).magnitude() < 400:
+                self.teammate_far_post = True
+            elif (mate.pos - in_net_pos).magnitude() < 400:
+                self.teammate_in_net = True
+
+        ##################################################################
+
+        if len(self.teammates) == 2:
+            self.number_of_team_in_front_of_ball = 0
+            self.ball_behind_me = False
+            self.ball_behind_teammate_zero = False
+            self.ball_behind_teammate_one = False
+            if self.ball.pos.y < self.me.pos.y:
+                self.ball_behind_me = True
+                self.number_of_team_in_front_of_ball += 1
+            if self.ball.pos.y < self.teammates[0].pos.y:
+                self.ball_behind_teammate_zero = True
+                self.number_of_team_in_front_of_ball += 1
+            if self.ball.pos.y < self.teammates[1].pos.y:
+                self.ball_behind_teammate_one = True
+                self.number_of_team_in_front_of_ball += 1
+
+            self.teammate_zero_ball_side = (self.me.pos.x * self.ball_x_sign < self.teammates[0].pos.x * self.ball_x_sign)
+            self.teammate_one_ball_side = (self.me.pos.x * self.ball_x_sign < self.teammates[1].pos.x * self.ball_x_sign)
+
+        ##################################################################
+
         #Boost info
         self.big_boosts = []
         self.boosts = []
@@ -104,6 +186,8 @@ class GameState:
         #Mirror the boost list left/right
         self.mirror_boost_list = [0, 2, 1, 4, 3, 6, 5, 7, 9, 8, 11, 10, 14, 13, 12, 18, 17, 16,
                                   15, 21, 20, 19, 23, 22, 25, 24, 26, 28, 27, 30, 29, 32, 31, 33]
+
+        ##################################################################
 
         #Other Game info
         self.game_time = packet.game_info.seconds_elapsed
@@ -491,37 +575,6 @@ class Hitbox:
         self.widths = [ car.hitbox.length, car.hitbox.width, car.hitbox.height ]
         self.offset = [ car.hitbox_offset.x, car.hitbox_offset.y, car.hitbox_offset.z ]
         self.half_widths = [ width / 2 for width in self.widths ]
-
-
-##################################################################################
-
-##################################################################################
-
-'''
-class Teammate(CarState):
-
-    def __init__(self,
-                 packet = None,
-                 hitboxes = None,
-                 jumped_last_frame = None,
-                 index = None,
-                 team_sign = None,
-                 label = None):
-        self.label = label
-
-
-class Opponent(CarState):
-    
-    def __init__(self,
-                 packet = None,
-                 hitboxes = None,
-                 jumped_last_frame = None,
-                 index = None,
-                 team_sign = None,
-                 label = None):
-        self.label = label
-'''
-
 
 
 
