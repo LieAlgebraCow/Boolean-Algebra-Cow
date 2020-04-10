@@ -61,58 +61,65 @@ def transition(game_info,
 
     ##########################
 
-    def transition_to_kickoff(game_info): #Could be a few of these
+    def transition_to_kickoff(game_info):
+
+        should_transition = False
         if game_info.is_kickoff_pause:
-            return True
-        return False
+            should_transition = True
+        return should_transition, game_info.persistent
 
     ##########################
 
     def transition_to_transition_forward(game_info):
 
+        should_transition = False
         if game_info.ball.pos.y < -1152:
-            return False
+            should_transition = False
 
         if game_info.number_of_team_in_front_of_ball == 1:
             if game_info.ball_behind_teammate_zero:
                 if not game_info.teammate_one_ball_side:
                     #If the teammate behind the ball is more on the ball side than we are, leave
-                    return True
+                    should_transition = True
             elif game_info.ball_behind_teammate_one:
                 if not game_info.teammate_zero_ball_side:
                     #If the teammate behind the ball is more on the ball side than we are, leave
-                    return True
+                    should_transition = True
 
         elif game_info.number_of_team_in_front_of_ball == 0:
             #If we're all three behind the ball
             if not (game_info.teammate_zero_ball_side or game_info.teammate_one_ball_side):
-                return True
+                should_transition = True
 
-        return False
-
-    ##########################
-
-    def transition_to_attack(game_info): #Return True to transition, return False to skip to the next one
-        return False
+        return should_transition, game_info.persistent
 
     ##########################
 
-    def transition_to_transition_back(game_info): #Return True to transition, return False to skip to the next one
+    def transition_to_attack(game_info):
+        should_transition = False
+        return should_transition, game_info.persistent
+
+    ##########################
+
+    def transition_to_transition_back(game_info):
+
+        should_transition = False
         if game_info.ball.pos.y > -4000:
             if game_info.ball_behind_me:
-                return True
+                should_transition = True
         else:
             ball_x = game_info.ball.pos.x
             me_x = game_info.ball.pos.x
             if abs(ball_x) < abs(me_x) and sign(ball_x) == sign(me_x):
-                return True
+                should_transition = True
 
-        return False
+        return should_transition, game_info.persistent
 
     ##########################
 
-    def transition_to_defend(game_info): #Return True to transition, return False to skip to the next one
-        return False
+    def transition_to_defend(game_info):
+        should_transition = False
+        return should_transition, game_info.persistent
 
     ##########################
 
@@ -122,10 +129,10 @@ def transition(game_info,
                          transition_to_defend,
                          transition_to_transition_forward]
 
-
     for i in range(len(state_transitions)):
-        if state_transitions[i](game_info):
-            return next_states[i]
+        should_transition, persistent = state_transitions[i](game_info)
+        if should_transition:
+            return next_states[i], persistent
 
 ##########################################################################
 

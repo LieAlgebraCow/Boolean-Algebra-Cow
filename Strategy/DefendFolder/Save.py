@@ -37,28 +37,33 @@ def transition(game_info,
                sub_state_machine):
 
     def transition_to_far_boost(game_info):
-        return False
+        should_transition = False
+        return should_transition, game_info.persistent
 
     ##########################
 
     def transition_to_far_post(game_info):
-        return False
+        should_transition = False
+        return should_transition, game_info.persistent
 
     ##########################
 
     def transition_to_in_net(game_info):
-        return False
+        should_transition = False
+        return should_transition, game_info.persistent
 
     ##########################
 
     def transition_to_clear(game_info):
-        return False
+        should_transition = False
+        return should_transition, game_info.persistent
 
     ##########################
 
     def transition_to_save(game_info):
-        return False
-    
+        should_transition = False
+        return should_transition, game_info.persistent
+
     ##########################
 
     state_transitions = [transition_to_far_boost,
@@ -68,9 +73,9 @@ def transition(game_info,
                          transition_to_save]
 
     for i in range(len(state_transitions)):
-        if state_transitions[i](game_info):
-            #Clear any RLU objects used
-            return next_states[i]
+        should_transition, persistent = state_transitions[i](game_info)
+        if should_transition:
+            return next_states[i], persistent
 
 ##########################################################################
 

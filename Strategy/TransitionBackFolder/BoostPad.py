@@ -14,33 +14,37 @@ def transition(game_info,
         boost_pad = game_info.boosts[14]
 
     def transition_to_mid_boost(game_info): #Could be a few of these
+        should_transition = False
 
-        return False
+        return should_transition, game_info.persistent
 
     ##########################
 
     def transition_to_back_boost(game_info):
+        should_transition = False
 
-        return False
+        return should_transition, game_info.persistent
 
     ##########################
 
     def transition_to_boost_pad(game_info):
+        should_transition = False
 
-        return False
-
+        return should_transition, game_info.persistent
 
     ##########################
 
     def transition_to_goal(game_info):
+        should_transition = False
         
         if game_info.me.boost > 80:
-            return True
+            should_transition = True
         if game_info.me.pos.y < -1050 and game_info.me.pos.x > 0:
-            return True
+            should_transition = True
         if not boost_pad.is_active:
-            return True
-        return False
+            should_transition = True
+
+        return should_transition, game_info.persistent
 
     ##########################
 
@@ -50,8 +54,9 @@ def transition(game_info,
                          transition_to_goal]
 
     for i in range(len(state_transitions)):
-        if state_transitions[i](game_info):
-            return next_states[i]
+        should_transition, persistent = state_transitions[i](game_info)
+        if should_transition:
+            return next_states[i], persistent
 
 ##########################################################################
 

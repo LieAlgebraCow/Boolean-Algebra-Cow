@@ -18,15 +18,15 @@ def transition(game_info,
                next_states,
                sub_state_machine):
 
-    def transition_to_path(game_info): #Could be a few of these
-
-        return False
+    def transition_to_path(game_info):
+        should_transition = False
+        return should_transition, game_info.persistent
 
     ##########################
 
-    def transition_to_challenge(game_info): #Return True to transition, return False to skip to the next one
-
-        return False
+    def transition_to_challenge(game_info):
+        should_transition = False
+        return should_transition, game_info.persistent
 
     ##########################
 
@@ -34,9 +34,9 @@ def transition(game_info,
                          transition_to_challenge]
 
     for i in range(len(state_transitions)):
-        if state_transitions[i](game_info):
-            #Clear any RLU objects used
-            return next_states[i]
+        should_transition, persistent = state_transitions[i](game_info)
+        if should_transition:
+            return next_states[i], persistent
 
 ########################################################################################################
 #Startup

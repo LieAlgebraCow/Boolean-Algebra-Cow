@@ -8,6 +8,10 @@ import Strategy.KickoffFolder.DoKickoffFolder.OffcenterLeft as OffcenterLeft
 import Strategy.KickoffFolder.DoKickoffFolder.OffcenterRight as OffcenterRight
 import Strategy.KickoffFolder.DoKickoffFolder.FarBack as FarBack
 
+########################################################################################################
+#States for the next level down
+########################################################################################################
+
 DiagonalLeftState = State(lambda game_info, next_states, sub_sm: DiagonalLeft.transition(game_info,
                                                                                          next_states,
                                                                                          sub_sm),
@@ -28,7 +32,7 @@ OffcenterLeftState = State(lambda game_info, next_states, sub_sm: OffcenterLeft.
                            lambda game_info: OffcenterLeft.startup(game_info),
                            lambda game_info, sub_state_machine: OffcenterLeft.get_controls(game_info, sub_state_machine),
                            "OffcenterLeft",
-                           True)
+                           False)
 OffcenterRightState = State(lambda game_info, next_states, sub_sm: OffcenterRight.transition(game_info,
                                                                                              next_states,
                                                                                              sub_sm),
@@ -44,24 +48,29 @@ FarBackState = State(lambda game_info, next_states, sub_sm: FarBack.transition(g
                      "FarBack",
                      True)
 
-##########################################################################
+########################################################################################################
+#Transition functions
+########################################################################################################
 
 def transition(game_info,
                next_states,
                sub_state_machine):
 
     def transition_to_do_kickoff(game_info):
-        return False
+        should_transition = False
+        return should_transition, game_info.persistent
 
     ##########################
 
     def transition_to_get_boost(game_info):
-        return False
+        should_transition = False
+        return should_transition, game_info.persistent
 
     ##########################
 
     def transition_to_cover_net(game_info):
-        return False
+        should_transition = False
+        return should_transition, game_info.persistent
 
     ##########################
 
@@ -70,8 +79,9 @@ def transition(game_info,
                          transition_to_cover_net]
 
     for i in range(len(state_transitions)):
-        if state_transitions[i](game_info):
-            return next_states[i]
+        should_transition, persistent = state_transitions[i](game_info)
+        if should_transition:
+            return next_states[i], persistent
 
 ##########################################################################
 

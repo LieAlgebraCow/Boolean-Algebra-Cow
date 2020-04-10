@@ -54,42 +54,49 @@ def transition(game_info,
             farthest_teammate = mate
 
     def transition_to_kickoff(game_info):
-        return False
+        should_transition = False
+        return should_transition, game_info.persistent
 
     ##########################
 
     def transition_to_attack(game_info):
         #If we can get the next touch, and a teammate doesn't have a better one
 
-        return False
+        should_transition = False
+        return should_transition, game_info.persistent
 
     ##########################
 
     def transition_to_transition_back(game_info):
+
+        should_transition =  False
         #Pretty much always go get boost
         if sub_state_machine.current_state == DoKickoffState and not game_info.is_kickoff_pause:
             #If we just took the kickoff and hit the ball, go get boost
-            return True
+            should_transition = True
 
         if sub_state_machine.current_state == GetBoostState and game_info.me.boost > 90:
             #If we're going for boost, make sure we get it
-            return True
+            should_transition = True
 
-        return False
+        return should_transition, game_info.persistent
 
     ##########################
 
     def transition_to_defend(game_info):
+
+        should_transition =  False
         if sub_state_machine.current_state == CoverNetState and not game_info.is_kickoff_pause:
             #If we were waiting in net for the kickoff, go to DefendState after the ball is hit
-            return True
+            should_transition = True
 
-        return False
+        return should_transition, game_info.persistent
 
     ##########################
 
     def transition_to_transition_forward(game_info):
-        return False
+        should_transition = False
+        return should_transition, game_info.persistent
 
     ##########################
 
@@ -99,10 +106,10 @@ def transition(game_info,
                          transition_to_defend,
                          transition_to_transition_forward]
 
-
     for i in range(len(state_transitions)):
-        if state_transitions[i](game_info):
-            return next_states[i]
+        should_transition, persistent = state_transitions[i](game_info)
+        if should_transition:
+            return next_states[i], persistent
 
 
 ########################################################################################################

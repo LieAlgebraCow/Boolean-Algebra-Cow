@@ -4,28 +4,33 @@ def transition(game_info,
                next_states,
                sub_state_machine):
 
-    def transition_to_diagonal_left(game_info): #Could be a few of these
-        return False
+    def transition_to_diagonal_left(game_info):
+        should_transition = False
+        return should_transition, game_info.persistent
 
     ##########################
 
-    def transition_to_diagonal_right(game_info): #Could be a few of these
-        return False
+    def transition_to_diagonal_right(game_info):
+        should_transition = False
+        return should_transition, game_info.persistent
 
     ##########################
 
-    def transition_to_offcenter_left(game_info): #Return True to transition, return False to skip to the next one
-        return False
+    def transition_to_offcenter_left(game_info):
+        should_transition = False
+        return should_transition, game_info.persistent
 
     ##########################
 
-    def transition_to_offcenter_right(game_info): #Return True to transition, return False to skip to the next one
-        return False
+    def transition_to_offcenter_right(game_info):
+        should_transition = False
+        return should_transition, game_info.persistent
 
     ##########################
 
-    def transition_to_far_back(game_info): #Return True to transition, return False to skip to the next one
-        return False
+    def transition_to_far_back(game_info):
+        should_transition = False
+        return should_transition, game_info.persistent
 
     ##########################
 
@@ -36,8 +41,9 @@ def transition(game_info,
                          transition_to_far_back]
 
     for i in range(len(state_transitions)):
-        if state_transitions[i](game_info):
-            return next_states[i]
+        should_transition, persistent = state_transitions[i](game_info)
+        if should_transition:
+            return next_states[i], persistent
 
 ##########################################################################
 

@@ -1,5 +1,7 @@
 from rlbot.agents.base_agent import SimpleControllerState
 
+from BallPrediction import ball_contact_binary_search
+from CowBotVector import Vec3
 from Maneuvers import GroundTurn
 
 
@@ -17,12 +19,14 @@ def transition(game_info,
                next_states,
                sub_state_machine):
 
-    def transition_to_path(game_info): #Could be a few of these
-        return False
+    def transition_to_path(game_info):
+        should_transition = False
+        return should_transition, game_info.persistent
 
     ##########################
 
-    def transition_to_challenge(game_info): #Return True to transition, return False to skip to the next one
+    def transition_to_challenge(game_info):
+        should_transition = False 
 
         ball_distance = (game_info.me.pos - game_info.ball.pos).magnitude()
         if game_info.ball.vel.magnitude() != 0 and game_info.me.vel.magnitude() != 0:        
@@ -31,9 +35,9 @@ def transition(game_info,
             ball_car_dot = 0    
 
         if ball_distance < 450 - 100*ball_car_dot and game_info.ball.pos.z < 250:
-            return True
+            should_transition = True
     
-        return False
+        return should_transition, game_info.persistent
 
     ##########################
 
@@ -41,9 +45,9 @@ def transition(game_info,
                          transition_to_challenge]
 
     for i in range(len(state_transitions)):
-        if state_transitions[i](game_info):
-            #Clear any RLU objects used
-            return next_states[i]
+        should_transition, persistent = state_transitions[i](game_info)
+        if should_transition:
+            return next_states[i], persistent
 
 ########################################################################################################
 #Startup
@@ -72,6 +76,13 @@ def get_controls(game_info, sub_state_machine):
         controls = persistent.path_follower.action.controls
     else:
         print("No path found!")
+        end_tangent = Vec3(0, 1, 0)
+  
+        #If we didn't have a path already, try to find one. Just ground turn for now, but
+        #when we find one we'll follow it starting next tick.
+        intercept_slice, persistent.path_follower.path, persistent.path_follower.action = ball_contact_binary_search(game_info, end_tangent = end_tangent)
+        #persistent.path_follower.end = intercept_slice.pos
+        
         controls = GroundTurn(game_info.me,
                               game_info.me.copy_state(pos = game_info.ball.pos)).input()
 

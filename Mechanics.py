@@ -235,18 +235,17 @@ class FrontDodge:
     '''
 
 
-    def __init__(self, current_state):
-        #Dodge direction is 1 for right, -1 for left
-        self.double_jumped = current_state.double_jumped
-        self.current_state = current_state
+    def __init__(self, me):
+        self.double_jumped = me.double_jumped
+        self.me = me
 
     def input(self):
-        controller_input = SimpleControllerState()
-        if self.current_state.pos.z < 40 and not self.current_state.double_jumped:
-            controller_input.jump = 1
+        controls = SimpleControllerState()
+        if self.me.pos.z < 40 and not self.me.double_jumped:
+            controls.jump = 1
         elif self.double_jumped:
             pass
-        elif self.current_state.pos.z > 40:
-            controller_input = AirDodge(Vec3(1,0,0), self.current_state.jumped_last_frame).input()
+        elif self.me.pos.z > 40:
+            controls = AirDodge(Vec3(1,0,0), self.me.jumped_last_frame).input()
 
-        return controller_input
+        return controls

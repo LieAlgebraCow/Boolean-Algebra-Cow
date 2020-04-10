@@ -6,16 +6,13 @@ from rlbot.agents.base_agent import BaseAgent, SimpleControllerState
 from rlbot.utils.structures.game_data_struct import GameTickPacket
 
 import rlutilities as utils
-from rlutilities.mechanics import Aerial as RLU_Aerial
 from rlutilities.mechanics import Dodge as RLU_Dodge
 from rlutilities.mechanics import FollowPath as RLU_FollowPath
 from rlutilities.simulation import Curve
 
 from BallPrediction import PredictionPath, ball_contact_binary_search
 from Conversions import Vec3_to_vec3, rot_to_mat3
-from Cowculate import Cowculate 
 from GameState import BallState, CarState, GameState, Hitbox, Orientation
-from Kickoffs.Kickoff import Kickoff, update_kickoff_position
 from Mechanics import PersistentMechanics, FrontDodge
 from Miscellaneous import predict_for_time
 from Pathing.PathPlanning import shortest_arclinearc
@@ -34,10 +31,9 @@ if TESTING or DEBUGGING:
 
     import GlobalRendering
     from StateSetting import *
-    from Mechanics import CancelledFastDodge, aerial_rotation
+    from Mechanics import CancelledFastDodge
     from Maneuvers import GroundTurn
     from Simulation import *
-    import Kickoffs.Fast_Kickoffs
     from Conversions import Vec3_to_Vector3
 
 class BooleanAlgebraCow(BaseAgent):
@@ -152,7 +148,6 @@ class BooleanAlgebraCow(BaseAgent):
                                     my_old_inputs = self.old_inputs,
                                     rigid_body_tick = self.get_rigid_body_tick(),
                                     persistent = self.persistent)
-
         if self.is_init:
             self.is_init = False
 
@@ -247,7 +242,7 @@ class BooleanAlgebraCow(BaseAgent):
         ###############################################################################################
 
         #print(self.top_level_decisions.current_state.name)
-        self.top_level_decisions.update(self.game_info) #Update the state machine for the current frame
+        self.game_info.persistent = self.top_level_decisions.update(self.game_info) #Update the state machine for the current frame
         output, self.game_info.persistent = self.top_level_decisions.get_controls(self.game_info) #return controls from that state
 
         self.old_kickoff_data = self.kickoff_data

@@ -1,0 +1,98 @@
+from rlbot.agents.base_agent import SimpleControllerState
+
+from StateMachine import State
+
+import Strategy.AttackFolder.AerialFolder.Ball as Ball
+import Strategy.AttackFolder.AerialFolder.Recover as Recover
+
+
+########################################################################################################
+#States for the next level down
+########################################################################################################
+
+BallState = State(lambda game_info, next_states, sub_sm: Ball.transition(game_info,
+                                                                                   next_states,
+                                                                                   sub_sm),
+                       lambda game_info: Ball.startup(game_info),
+                       lambda game_info, sub_state_machine: Ball.get_controls(game_info, sub_state_machine),
+                       "Ball",
+                       True)
+RecoverState = State(lambda game_info, next_states, sub_sm: Recover.transition(game_info,
+                                                                                 next_states,
+                                                                                 sub_sm),
+                      lambda game_info: Recover.startup(game_info),
+                      lambda game_info, sub_state_machine: Recover.get_controls(game_info, sub_state_machine),
+                      "Recover",
+                      True)
+
+########################################################################################################
+#Transition functions
+########################################################################################################
+
+def transition(game_info,
+               next_states,
+               sub_state_machine):
+
+    def transition_to_path(game_info):
+        should_transition = False
+        return should_transition, game_info.persistent
+
+    ##########################
+
+    def transition_to_challenge(game_info):
+
+        should_transition = False
+        ball_distance = (game_info.me.pos - game_info.ball.pos).magnitude()
+        if game_info.ball.vel.magnitude() != 0 and game_info.me.vel.magnitude() != 0:        
+            ball_car_dot = game_info.me.vel.normalize().dot(game_info.ball.vel.normalize())
+        else:
+            ball_car_dot = 0
+        
+
+        if ball_distance < 450 - 100*ball_car_dot and game_info.ball.pos.z < 250:
+            should_transition = True
+
+        return should_transition, game_info.persistent
+
+    ##########################
+
+    def transition_to_aerial(game_info):
+        should_transition = False
+
+        return should_transition, game_info.persistent
+
+    ##########################
+
+    state_transitions = [transition_to_path,
+                         transition_to_challenge,
+                         transition_to_aerial]
+
+    for i in range(len(state_transitions)):
+        should_transition, persistent = state_transitions[i](game_info)
+        if should_transition:
+            return next_states[i], persistent
+
+########################################################################################################
+#Startup
+########################################################################################################
+
+def startup(game_info):
+
+    state = BallState
+    state_list = [BallState,
+                  RecoverState]
+
+    persistent = game_info.persistent
+
+    return state, state_list, persistent
+
+########################################################################################################
+#Controls
+########################################################################################################
+
+def get_controls(game_info, sub_state_machine):
+
+    return sub_state_machine.get_controls(game_info)
+
+
+

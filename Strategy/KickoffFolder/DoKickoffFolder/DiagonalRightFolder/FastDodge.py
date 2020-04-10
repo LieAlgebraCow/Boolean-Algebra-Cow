@@ -11,34 +11,41 @@ def transition(game_info,
                sub_state_machine):
 
     def transition_to_boost(game_info):
-        return False
+        should_transition = False
+        return should_transition, game_info.persistent
 
     ##########################
 
     def transition_to_jump(game_info):
-        return False
+        should_transition = False
+        return should_transition, game_info.persistent
 
     ##########################
 
     def transition_to_fast_dodge(game_info):
-        return False
+        should_transition = False
+        return should_transition, game_info.persistent
 
     ##########################
 
     def transition_to_aerial_rotation(game_info):
+        should_transition = False
+
         if game_info.me.pos.y > -1800:
-            return True
-        return False
+            should_transition = True
+        return should_transition, game_info.persistent
 
     ##########################
 
     def transition_to_turn(game_info):
-        return False
+        should_transition = False
+        return should_transition, game_info.persistent
 
     ##########################
 
     def transition_to_dodge(game_info):
-        return False
+        should_transition = False
+        return should_transition, game_info.persistent
 
     ##########################
 
@@ -50,8 +57,9 @@ def transition(game_info,
                          transition_to_dodge]
 
     for i in range(len(state_transitions)):
-        if state_transitions[i](game_info):
-            return next_states[i]
+        should_transition, persistent = state_transitions[i](game_info)
+        if should_transition:
+            return next_states[i], persistent
 
 ##########################################################################
 

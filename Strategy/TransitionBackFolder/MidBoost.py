@@ -9,12 +9,15 @@ def transition(game_info,
                sub_state_machine):
 
     def transition_to_mid_boost(game_info):
+        should_transition = False
 
-        return False
+        return should_transition, game_info.persistent
+
 
     ##########################
 
     def transition_to_back_boost(game_info):
+        should_transition = False
 
         ball_x_sign = sign(game_info.ball.pos.x)
 
@@ -26,19 +29,20 @@ def transition(game_info,
         #############
 
         if not far_mid_boost.is_active: #TODO: If it won't be active by time we get there
-            return True
+            should_transition = True
 
 
-        if game_info.me.pos.y > -1000:
-            return True
-    #If someone will get there before us, go for back boost
+        if game_info.me.pos.y < -2000:
+            should_transition = True
+        #If someone will get there before us, go for back boost
 
-        return False
+        return should_transition, game_info.persistent
 
         
     ##########################
 
     def transition_to_boost_pad(game_info):
+        should_transition = False
 
         ball_x_sign = sign(game_info.ball.pos.x)
 
@@ -50,16 +54,18 @@ def transition(game_info,
         #############
 
         if game_info.me.boost > 60:
-            return True
+            should_transition = True
 
-        return False
+        return should_transition, game_info.persistent
 
         
     ##########################
 
     def transition_to_goal(game_info):
+        should_transition = False
 
-        return False
+        return should_transition, game_info.persistent
+
 
     ##########################
 
@@ -69,8 +75,9 @@ def transition(game_info,
                          transition_to_goal]
 
     for i in range(len(state_transitions)):
-        if state_transitions[i](game_info):
-            return next_states[i]
+        should_transition, persistent = state_transitions[i](game_info)
+        if should_transition:
+            return next_states[i], persistent
 
 
 

@@ -4,35 +4,39 @@ def transition(game_info,
                next_states,
                sub_state_machine):
 
-    def transition_to_kickoff(game_info): #Could be a few of these
+    def transition_to_kickoff(game_info):
 
-        return True
+        should_transition = True
+        return should_transition, game_info.persistent
 
     ##########################
 
     def transition_to_attack(game_info):
         
-        return False
+        should_transition = False
+        return should_transition, game_info.persistent
 
 
     ##########################
 
-    def transition_to_transition_back(game_info): #Return True to transition, return False to skip to the next one
-        return False
+    def transition_to_transition_back(game_info):
+        should_transition = False
+        return should_transition, game_info.persistent
 
     ##########################
 
-    def transition_to_defend(game_info): #Return True to transition, return False to skip to the next one
+    def transition_to_defend(game_info):
 
-        return False
-
-    ##########################
-
-    def transition_to_transition_forward(game_info): #Return True to transition, return False to skip to the next one
-        return False
+        should_transition = False
+        return should_transition, game_info.persistent
 
     ##########################
 
+    def transition_to_transition_forward(game_info):
+        should_transition = False
+        return should_transition, game_info.persistent
+
+    ##########################
 
     state_transitions = [transition_to_kickoff,
                          transition_to_attack,
@@ -41,8 +45,9 @@ def transition(game_info,
                          transition_to_transition_forward]
 
     for i in range(len(state_transitions)):
-        if state_transitions[i](game_info):
-            return next_states[i]
+        should_transition, persistent = state_transitions[i](game_info)
+        if should_transition:
+            return next_states[i], persistent
 
 ##########################################################################
 
